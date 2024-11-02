@@ -5,21 +5,22 @@ const upload = multer({ storage: multer.memoryStorage() });
 const totalCalendarController = require('../controllers/totalCalendarController');
 const authenticateJWT = require('../jwt/auth');
 
-router.get('/', totalCalendarController.getClasses);
-router.get('/totalCalendar', authenticateJWT, (req, res) => {
+router.get('/', totalCalendarController.getClassesid);
+router.get('/totalCalendar', (req, res) => {
+//router.get('/totalCalendar', authenticateJWT, (req, res) => {
     if (req.role === 'teacher'){
-        totalCalendarController.getAllClassTeacher
+        totalCalendarController.getAllClassTeacher(req, res);
     }
     else if(req.role === 'student'){
-        totalCalendarController.getAllClassStudent
+        totalCalendarController.getAllClassStudent(req, res);
     }
 });
 router.get('/classByDate', authenticateJWT, (req, res) => {
     if (req.role === 'teacher'){
-        totalCalendarController.getClassesByDateTeacher
+        totalCalendarController.getClassesByDateTeacher(req, res);
     }
     else if(req.role === 'student'){
-        totalCalendarController.getClassesByDateTeacher
+        totalCalendarController.getClassesByDateStudent(req, res);
     }
 });
 

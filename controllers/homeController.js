@@ -73,6 +73,7 @@ exports.getEachClassStudent = (req, res) => {
 
 // list of dates with unwritten feedback for teacher
 exports.getUnwrittenFeedbackDates = (req, res) => {
+    const { classId } = req.query;
     const teacherId = req.teacherId; // Authenticated teacherId from JWT
 
     const sql = `
@@ -82,13 +83,11 @@ exports.getUnwrittenFeedbackDates = (req, res) => {
             D.date
         FROM 
             dates AS D
-        JOIN 
-            classes AS C ON D.classid = C.classid
         LEFT JOIN 
             feedback AS F ON D.dateid = F.dateid
         WHERE 
-            C.teacherid = ? 
-            AND F.dateid IS NULL`;
+            D.classId = ? AND C.teacherid = ? 
+            AND F.dateid IS NULL AND D.feedback_written = 0`;
 
     db.query(sql, [teacherId], (err, results) => {
         if (err) return res.status(500).send(err);

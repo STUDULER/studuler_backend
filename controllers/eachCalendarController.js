@@ -84,7 +84,7 @@ exports.getFeedbackByDateTeacher = (req, res) => {
                        'memo', F.memo,
                        'rate', F.rate
                    )
-                       
+
                    ELSE NULL
                END AS feedbackDetails
         FROM classes AS C
@@ -100,7 +100,7 @@ exports.getFeedbackByDateTeacher = (req, res) => {
 
 
 // for each date clicked in student's total calendar 
-exports.getClassesByDateStudent = (req, res) => {
+exports.getFeedbackByDateStudent = (req, res) => {
     const { date } = req.query;
     const { classId } = req.query;
     const studentId = req.userId;

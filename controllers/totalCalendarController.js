@@ -1,5 +1,14 @@
 const db = require('../config/db');
 
+exports.getClassesid = (req, res) => {
+    const teacherId = req.userId;
+
+    db.query('SELECT C.classid FROM classes AS C, teachers AS T WHERE C.teacherid = T.teacherid', [teacherId], (err, results) => {
+        if (err) return res.status(500).send(err);
+        res.json(results);
+    });
+};
+
 // all class information for a teacher's total calendar
 exports.getAllClassTeacher = (req, res) => {
     const teacherId = req.userId;
@@ -70,7 +79,7 @@ exports.getClassesByDateTeacher = (req, res) => {
     const sql = `
         SELECT C.classid, C.classname, C.time, C.themecolor,
                CASE 
-                   WHEN F.feedbackid IS NOT NULL THEN '피드백 완료'
+                   WHEN D.feedback_written IS 0 THEN '피드백 완료'
                    ELSE '피드백 미완료'
                END AS feedbackStatus
         FROM classes AS C
@@ -94,7 +103,7 @@ exports.getClassesByDateStudent = (req, res) => {
     const sql = `
         SELECT C.classid, C.classname, C.time, C.themecolor,
                CASE 
-                   WHEN F.feedbackid IS NOT NULL THEN '피드백 완료'
+                   WHEN D.feedback_written IS 0 THEN '피드백 완료'
                    ELSE '피드백 미완료'
                END AS feedbackStatus
         FROM classes AS C
