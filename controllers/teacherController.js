@@ -13,17 +13,16 @@ exports.getTeachers = (req, res) => {
 
 // when teacher signs up
 exports.signupTeacher = (req, res) => {
-    const { username, password, account, bank } = req.body;
-    const image = req.file ? req.file.buffer : null;
+    const { username, password, account, bank, name, mail, loginMethod, image } = req.body;
     /*if (!username ){//|| !image) {
         return res.status(400).send('Username and image are required.');
     }*/
-    const sql = 'INSERT INTO teachers (username, password, account, bank, image) VALUES (?, ?, ?, ?, ?)';
-    db.query(sql, [username, password, account, bank, image], (err, result) => {
+    const sql = 'INSERT INTO teachers (username, password, account, bank, name, mail, loginMethod, image, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())';
+    db.query(sql, [username, password, account, bank, name, mail, loginMethod, image], (err, result) => {
         if (err) return res.status(500).send(err);
 
-        const token = jwt.sign({ userId: result.insertId, username }, process.env.JWT_SECRET, { expiresIn: '3h' });
-        res.status(201).json({ userId: result.insertId, role: 'teacher', username, password, account, bank, token });
+        const token = jwt.sign({ userId: result.insertId, username }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        res.status(201).json({ userId: result.insertId, role: 'teacher', username, password, account, bank, name, mail, loginMethod, image, createdAt: new Date(), updatedAt: new Date(), token });
     });
 };
 

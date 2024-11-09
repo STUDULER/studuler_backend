@@ -134,3 +134,8 @@ dist
 
 # SvelteKit build / generate output
 .svelte-kit
+
+/aws/
+/aws/studuler-keypair.pem
+
+.DS_Store
