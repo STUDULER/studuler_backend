@@ -20,6 +20,6 @@ app.get('/', (req, res) => {
     res.send('Welcome to STUDULER');
 });
 
-app.listen(process.env.PORT, '0.0.0.0', () => {
+app.listen(80, () => {
     console.log("Server is running");
 });
