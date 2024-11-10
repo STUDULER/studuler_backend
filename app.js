@@ -6,6 +6,7 @@ const homeRoutes = require('./routes/homeRoutes');
 const totalRoutes = require('./routes/totalCalendarRoutes');
 const eachRoutes = require('./routes/eachCalendarRoutes');
 const authenticateJWT = require('./jwt/auth');
+const PORT = 80;
 
 app.use(express.json());
 //app.use(express.urlencoded({ extended: true }));
@@ -20,6 +21,6 @@ app.get('/', (req, res) => {
     res.send('Welcome to STUDULER');
 });
 
-app.listen(80, () => {
+app.listen(PORT, () => {
     console.log("Server is running");
 });
