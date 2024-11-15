@@ -30,45 +30,6 @@ exports.signupTeacher = (req, res) => {
     });
 };
 
-// teacher sign up with kakao
-exports.signupTeacherKakao = (req, res) => {
-    const { username, account, bank, name, mail, image } = req.body;
-
-    const sql = 'INSERT INTO teachers (username, account, bank, name, mail, image, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())';
-    db.query(sql, [username, account, bank, name, mail, image], (err, result) => {
-        if (err) return res.status(500).send(err);
-
-        const token = jwt.sign({ userId: result.insertId, name }, process.env.JWT_SECRET, { expiresIn: '1h' });
-        res.status(201).json({ userId: result.insertId, role: 'teacher', username, account, bank, name, mail, image, createdAt: new Date(), updatedAt: new Date(), token });
-    });
-}
-
-// teacher sign up with google
-exports.signupTeacherGoogle = (req, res) => {
-    const { username, account, bank, name, mail, image } = req.body;
-
-    const sql = 'INSERT INTO teachers (username, account, bank, name, mail, image, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())';
-    db.query(sql, [username, account, bank, name, mail, image], (err, result) => {
-        if (err) return res.status(500).send(err);
-
-        const token = jwt.sign({ userId: result.insertId, name }, process.env.JWT_SECRET, { expiresIn: '1h' });
-        res.status(201).json({ userId: result.insertId, role: 'teacher', username, account, bank, name, mail, image, createdAt: new Date(), updatedAt: new Date(), token });
-    });
-}
-
-// teacher sign up with mail
-exports.signupTeacherMail = (req, res) => {
-    const { username, password, account, bank, name, mail, image } = req.body;
-
-    const sql = 'INSERT INTO teachers (username, account, bank, name, mail, image, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())';
-    db.query(sql, [username, password, account, bank, name, mail, image], (err, result) => {
-        if (err) return res.status(500).send(err);
-
-        const token = jwt.sign({ userId: result.insertId, name }, process.env.JWT_SECRET, { expiresIn: '1h' });
-        res.status(201).json({ userId: result.insertId, role: 'teacher', username, password, account, bank, name, mail, image, createdAt: new Date(), updatedAt: new Date(), token });
-    });
-}
-
 // jwt token for authentication when logs in
 exports.loginTeacher = (req, res) => {
     const { username, password } = req.body;

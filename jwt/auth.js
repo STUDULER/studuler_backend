@@ -4,15 +4,17 @@ require('dotenv').config();
 const JWT_SECRET = process.env.JWT_SECRET;
 
 const authenticateJWT = (req, res, next) => { // verify the token
-    const token = req.headers.authorization?.split(' ')[1]; // read the token
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
+
     if (!token) return res.status(403).send('Token required');
 
     jwt.verify(token, JWT_SECRET, (err, decoded) => {
         if (err) return res.status(403).send('Invalid token');
 
         // JSON data
-        req.userId = decoded.userId;  // attach teacherId to request
-        req.role = decoded.role; // role of the user
+        req.userId = decoded.userId || null;  // attach teacherId to request
+        req.role = decoded.role || null; // role of the user
 
         next();
     });

@@ -8,10 +8,10 @@ const authenticateJWT = require('../jwt/auth');
 router.get('/', homeController.getClasses);
 router.get('/eachClass', authenticateJWT, (req, res) => {
     if (req.role === 'teacher'){
-        homeController.getEachClassTeacher
+        homeController.getEachClassTeacher(req, res);
     }
     else if(req.role === 'student'){
-        homeController.getEachClassStudent
+        homeController.getEachClassStudent(req, res);
     }
 });
 router.get('/unwrittenFeedbackDates', authenticateJWT, homeController.getUnwrittenFeedbackDates);
