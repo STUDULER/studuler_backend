@@ -9,7 +9,7 @@ const authenticateJWT = require('./jwt/auth');
 const PORT = 80;
 
 app.use(express.json());
-//app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true }));
 app.use('/teachers', teacherRoutes); // just for checking work easily
 //app.use('/teachers', authenticateJWT, teacherRoutes); // this is correct one
 //app.use("/students", authenticateJWT, studentRoutes);

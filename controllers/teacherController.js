@@ -17,6 +17,8 @@ exports.signupTeacher = (req, res) => {
     /*if (!username ){//|| !image) {
         return res.status(400).send('Username and image are required.');
     }*/
+    console.log('Received data:', req.body);
+
     const sql = 'INSERT INTO teachers (username, password, account, bank, name, mail, loginMethod, imageNum, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())';
     db.query(sql, [username, password, account, bank, name, mail, loginMethod, imageNum], (err, result) => {
         //if (err) return res.status(500).send(err);
