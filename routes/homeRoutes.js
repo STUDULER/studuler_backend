@@ -5,15 +5,28 @@ const upload = multer({ storage: multer.memoryStorage() });
 const homeController = require('../controllers/homeController');
 const authenticateJWT = require('../jwt/auth');
 
+// get all classes
 router.get('/', homeController.getClasses);
-router.get('/eachClass', authenticateJWT, (req, res) => {
-    if (req.role === 'teacher'){
-        homeController.getEachClassTeacher(req, res);
-    }
-    else if(req.role === 'student'){
-        homeController.getEachClassStudent(req, res);
-    }
+
+// get classes information participated by the user
+router.get('/eachClassT', authenticateJWT, (req, res) => {
+    homeController.getEachClassTeacher(req, res);
 });
+router.get('/eachClassS', authenticateJWT, (req, res) => {
+    homeController.getEachClassStudent(req, res);
+});
+
+// create class for teacher
+router.post('/createClass', authenticateJWT, (req, res) => {
+    console.log('Received data:', req.body);  // Log the incoming request data
+    homeController.createClassTeacher(req, res);
+});
+// join class for student
+router.put('/joinClass', authenticateJWT, upload.none(), (req, res) => { // should delete upload.none()
+    console.log('Received data:', req.body);  // Log the incoming request data
+    homeController.joinClass(req, res);
+});
+
 router.get('/unwrittenFeedbackDates', authenticateJWT, homeController.getUnwrittenFeedbackDates);
 
 

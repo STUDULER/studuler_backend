@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const { v4: uuidv4 } = require('uuid');
 
 exports.getClasses = (req, res) => {
     db.query('SELECT * FROM classes', (err, results) => {
@@ -7,9 +8,58 @@ exports.getClasses = (req, res) => {
     });
 };
 
+// class created by teacher
+exports.createClassTeacher = (req, res) => {
+    const { classname, period, time, hourlyrate, prepay, themecolor } = req.body;
+    const userId = req.userId;
+
+    console.log('Received data:', req.body);
+    console.log('Authenticated teacher ID:', userId);
+
+    const classcode = uuidv4().split('-')[0];
+
+    // day 넣어야함!!!
+    const sql = 'INSERT INTO classes (classname, period, time, hourlyrate, prepay, themecolor, teacherid, classcode, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())';
+    db.query(sql, [classname, period, time, hourlyrate, prepay, themecolor, userId, classcode], (err, result) => {
+	    if (err) {
+            console.error('Database query error:', err); // Log any error from the database query
+            return res.status(500).send(err);
+        }
+
+        res.status(201).json({ message: 'Class created successfully', classId: result.insertId, classname, classcode });
+    });
+};
+
+exports.joinClass = (req, res) => { // for student
+    const { classcode } = req.body;
+    const userId = req.userId;
+
+    console.log('Received data:', req.body);
+    console.log('Authenticated student ID:', userId);
+
+    const sql = 'UPDATE classes SET studentid = ? WHERE classcode = ? AND studentid IS NULL';
+
+    db.query(sql, [userId, classcode], (err, result) => {
+        if (err) {
+            console.error('Database query error:', err); // Log any error from the database query
+            return res.status(500).send(err);
+        }
+
+        if (result.affectedRows > 0) {
+            // Successfully updated the class with studentId
+            res.status(200).json({ message: 'Successfully joined the class.' });
+        } else {
+            // No rows affected, either classcode is invalid or student already joined
+            res.status(400).json({ message: 'Could not join the class. Make sure the class exists and has no student yet.' });
+        }
+    });
+}
+
 // each class information for teacher's home screen
-exports.getEachClassTeacher = (req, res) => {
-    const teacherId = req.teacherId;
+exports.getEachClassTeacher = (req, res) => { 
+    const teacherId = req.userId;
+
+    console.log('Teacher ID:', req.userId);
 
     // 학생이름, 요일, 정산방법, 수업횟수, 다음정산일, 수업코드, 제목, 진행수업횟수, 테마색상
     const sql = `
@@ -29,8 +79,8 @@ exports.getEachClassTeacher = (req, res) => {
             classes AS C
         JOIN 
             teachers AS T ON T.teacherid = C.teacherid
-        JOIN 
-            students AS S ON C.studentid = S.studentid
+        LEFT JOIN
+            students AS S ON C.studentid = S.studentid AND C.studentid IS NOT NULL
         WHERE 
             T.teacherid = ?`;
             

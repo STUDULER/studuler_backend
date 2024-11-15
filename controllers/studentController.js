@@ -14,10 +14,10 @@ exports.getStudents = (req, res) => {
 // when student signs up
 exports.signupStudent = (req, res) => {
     const { username, password, name, mail, loginMethod, imageNum } = req.body;
-    /*if (!username){ //|| !image) {
-        return res.status(400).send('Username and image are required.');
-    }*/
-    const sql = 'INSERT INTO students (username, password, name, mail, loginMethod, imageNum) VALUES (?, ?, ?, ?, ?)';
+
+    console.log('Received data:', req.body);
+
+    const sql = 'INSERT INTO students (username, password, name, mail, loginMethod, imageNum, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())';
     db.query(sql, [username, password, name, mail, loginMethod, imageNum], (err, result) => {
         if (err) return res.status(500).send(err);
 

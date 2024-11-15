@@ -5,7 +5,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 const studentController = require('../controllers/studentController');
 const authenticateJWT = require('../jwt/auth');
 
-router.get('/', authenticateJWT, studentController.getStudents);
-//router.post('/', upload.single('image'), studentController.createStudent);
+router.get('/', studentController.getStudents);
+router.post('/signup', upload.none(), studentController.signupStudent);
 
 module.exports = router;
