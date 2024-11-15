@@ -13,16 +13,16 @@ exports.getStudents = (req, res) => {
 
 // when student signs up
 exports.signupStudent = (req, res) => {
-    const { username, password, name, mail, loginMethod, image } = req.body;
+    const { username, password, name, mail, loginMethod, imageNum } = req.body;
     /*if (!username){ //|| !image) {
         return res.status(400).send('Username and image are required.');
     }*/
-    const sql = 'INSERT INTO students (username, password, name, mail, loginMethod, image) VALUES (?, ?, ?, ?, ?)';
-    db.query(sql, [username, password, name, mail, loginMethod, image], (err, result) => {
+    const sql = 'INSERT INTO students (username, password, name, mail, loginMethod, imageNum) VALUES (?, ?, ?, ?, ?)';
+    db.query(sql, [username, password, name, mail, loginMethod, imageNum], (err, result) => {
         if (err) return res.status(500).send(err);
 
-        const token = jwt.sign({ userId: result.insertId, username }, process.env.JWT_SECRET, { expiresIn: '1h' });
-        res.status(201).json({ userId: result.insertId, role: 'student', username, password, name, mail, loginMethod, image, token });
+        const token = jwt.sign({ userId: result.insertId, role: 'student' }, JWT_SECRET, { expiresIn: '1h' });
+        res.status(201).json({ userId: result.insertId, role: 'student', username, password, name, mail, loginMethod, imageNum, token });
     });
 };
 

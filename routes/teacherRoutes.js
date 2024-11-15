@@ -11,6 +11,7 @@ router.post('/signup', upload.single('image'),teacherController.signupTeacher);
 router.post('/signup/kakao', upload.single('image'),teacherController.signupTeacherKakao);
 router.post('/signup/google', upload.single('image'),teacherController.signupTeacherGoogle);
 router.post('/signup/mail', upload.single('image'),teacherController.signupTeacherMail);
+
 router.post('/login', teacherController.loginTeacher);
 
 module.exports = router;

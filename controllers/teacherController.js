@@ -13,16 +13,20 @@ exports.getTeachers = (req, res) => {
 
 // when teacher signs up
 exports.signupTeacher = (req, res) => {
-    const { username, password, account, bank, name, mail, loginMethod, image } = req.body;
+    const { username, password, account, bank, name, mail, loginMethod, imageNum } = req.body;
     /*if (!username ){//|| !image) {
         return res.status(400).send('Username and image are required.');
     }*/
-    const sql = 'INSERT INTO teachers (username, password, account, bank, name, mail, loginMethod, image, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())';
-    db.query(sql, [username, password, account, bank, name, mail, loginMethod, image], (err, result) => {
-        if (err) return res.status(500).send(err);
+    const sql = 'INSERT INTO teachers (username, password, account, bank, name, mail, loginMethod, imageNum, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())';
+    db.query(sql, [username, password, account, bank, name, mail, loginMethod, imageNum], (err, result) => {
+        //if (err) return res.status(500).send(err);
+	if (err) {
+            console.error('Database query error:', err); // Log any error from the database query
+            return res.status(500).send(err);
+        }
 
-        const token = jwt.sign({ userId: result.insertId, username }, process.env.JWT_SECRET, { expiresIn: '1h' });
-        res.status(201).json({ userId: result.insertId, role: 'teacher', username, password, account, bank, name, mail, loginMethod, image, createdAt: new Date(), updatedAt: new Date(), token });
+        const token = jwt.sign({ userId: result.insertId, role: 'teacher' }, JWT_SECRET, { expiresIn: '1h' });
+        res.status(201).json({ userId: result.insertId, role: 'teacher', username, password, account, bank, name, mail, loginMethod, imageNum, createdAt: new Date(), updatedAt: new Date(), token });
     });
 };
 

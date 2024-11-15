@@ -12,7 +12,7 @@ app.use(express.json());
 //app.use(express.urlencoded({ extended: true }));
 app.use('/teachers', teacherRoutes); // just for checking work easily
 //app.use('/teachers', authenticateJWT, teacherRoutes); // this is correct one
-app.use("/students", authenticateJWT, studentRoutes);
+//app.use("/students", authenticateJWT, studentRoutes);
 app.use("/home", homeRoutes);
 app.use("/total", totalRoutes);
 app.use("/each", eachRoutes);
