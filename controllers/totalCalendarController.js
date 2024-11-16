@@ -12,6 +12,7 @@ exports.getClassesid = (req, res) => {
 // all class information for a teacher's total calendar
 exports.getAllClassTeacher = (req, res) => {
     const teacherId = req.userId;
+    console.log('Teacher ID from JWT:', teacherId);
 
     // 학생이름, 요일, 정산방법, 수업횟수, 다음정산일, 수업코드, 제목, 진행수업횟수, 테마색상
     const sql = `

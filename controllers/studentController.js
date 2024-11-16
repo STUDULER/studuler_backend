@@ -36,7 +36,7 @@ exports.loginStudent = (req, res) => {
         if (results.length === 0) return res.status(401).send('Invalid credentials');
 
         const student = results[0];
-        const token = jwt.sign({ userId: student.studentId, role: 'student' }, JWT_SECRET, { expiresIn: '3h' });
+        const token = jwt.sign({ userId: student.studentid, role: 'student' }, JWT_SECRET, { expiresIn: '3h' });
 
         res.json({ token });
     });

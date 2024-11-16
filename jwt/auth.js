@@ -10,7 +10,10 @@ const authenticateJWT = (req, res, next) => { // verify the token
     if (!token) return res.status(403).send('Token required');
 
     jwt.verify(token, JWT_SECRET, (err, decoded) => {
-        if (err) return res.status(403).send('Invalid token');
+        if (err) {
+            console.error('JWT verification error:', err.message);
+            return res.status(403).send('Invalid token');
+        }
 
         // JSON data
         req.userId = decoded.userId || null;  // attach teacherId to request

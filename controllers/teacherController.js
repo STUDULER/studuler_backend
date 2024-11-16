@@ -42,7 +42,7 @@ exports.loginTeacher = (req, res) => {
         if (results.length === 0) return res.status(401).send('Invalid credentials');
 
         const teacher = results[0];
-        const token = jwt.sign({ userId: teacher.teacherId, role: 'teacher' }, JWT_SECRET, { expiresIn: '3h' });
+        const token = jwt.sign({ userId: teacher.teacherid, role: 'teacher' }, JWT_SECRET, { expiresIn: '3h' });
 
         res.json({ token });
     });

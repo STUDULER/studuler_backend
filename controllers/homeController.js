@@ -30,7 +30,8 @@ exports.createClassTeacher = (req, res) => {
     });
 };
 
-exports.joinClass = (req, res) => { // for student
+// student joins class
+exports.joinClass = (req, res) => {
     const { classcode } = req.body;
     const userId = req.userId;
 
@@ -39,21 +40,54 @@ exports.joinClass = (req, res) => { // for student
 
     const sql = 'UPDATE classes SET studentid = ? WHERE classcode = ? AND studentid IS NULL';
 
-    db.query(sql, [userId, classcode], (err, result) => {
+    // 두개 query 적용 위해 transaction 사용
+    db.beginTransaction((err) => {
         if (err) {
-            console.error('Database query error:', err); // Log any error from the database query
+            console.error('Transaction start error:', err);
             return res.status(500).send(err);
         }
 
-        if (result.affectedRows > 0) {
-            // Successfully updated the class with studentId
-            res.status(200).json({ message: 'Successfully joined the class.' });
-        } else {
-            // No rows affected, either classcode is invalid or student already joined
-            res.status(400).json({ message: 'Could not join the class. Make sure the class exists and has no student yet.' });
-        }
+        // insert studentid in classes relation
+        const updateClassSql = 'UPDATE classes SET studentid = ? WHERE classcode = ? AND studentid IS NULL';
+        db.query(updateClassSql, [userId, classcode], (updateErr, updateResult) => {
+            if (updateErr) {
+                console.error('Database query error:', updateErr);
+                return db.rollback(() => res.status(500).send(updateErr));
+            }
+
+            if (updateResult.affectedRows === 0) {
+                // No rows updated, rollback transaction
+                return db.rollback(() => {
+                    res.status(400).json({ message: 'Could not join the class. Make sure the class exists and has no student yet.' });
+                });
+            }
+            
+            // insert new tuple in student_classinfo
+            const insertClassInfoSql = `
+                INSERT INTO student_classinfo (studentid, classid, classname, teachername, themecolor, createdAt, updatedAt)
+                SELECT ?, c.classid, c.classname, t.name AS teachername, c.themecolor, NOW(), NOW()
+                FROM classes c
+                JOIN teachers t ON c.teacherid = t.teacherid
+                WHERE c.classcode = ?
+            `;
+            db.query(insertClassInfoSql, [userId, classcode], (insertErr, insertResult) => {
+                if (insertErr) {
+                    console.error('Database query error:', insertErr);
+                    return db.rollback(() => res.status(500).send(insertErr));
+                }
+
+                db.commit((commitErr) => {
+                    if (commitErr) {
+                        console.error('Transaction commit error:', commitErr);
+                        return db.rollback(() => res.status(500).send(commitErr));
+                    }
+
+                    res.status(200).json({ message: 'Successfully joined the class and updated class info.' });
+                });
+            });
+        });
     });
-}
+};
 
 // each class information for teacher's home screen
 exports.getEachClassTeacher = (req, res) => { 
@@ -64,7 +98,7 @@ exports.getEachClassTeacher = (req, res) => {
     // 학생이름, 요일, 정산방법, 수업횟수, 다음정산일, 수업코드, 제목, 진행수업횟수, 테마색상
     const sql = `
         SELECT 
-            S.username, 
+            S.name, 
             C.classid, 
             C.classcode, 
             C.classname,
@@ -94,30 +128,97 @@ exports.getEachClassTeacher = (req, res) => {
 exports.getEachClassStudent = (req, res) => {
     const studentId = req.studentId;
 
-    // 학생이름, 요일, 정산방법, 수업횟수, 다음정산일, 수업코드, 제목, 진행수업횟수, 테마색상
+    // 선생이름, 요일, 정산방법, 수업횟수, 다음정산일, 수업코드, 제목, 진행수업횟수, 테마색상
     const sql = `
         SELECT 
-            T.username, 
+            SCI.teachername, 
             C.classid, 
             C.classcode, 
+            SCI.classname,
             C.day, 
+            C.time
             C.period, 
             C.dateofpayment, 
             C.hourlyrate, 
             C.prepay, 
-            C.themecolor 
+            SCI.themecolor 
         FROM 
-            classes AS C
+            student_classinfo AS SCI
         JOIN 
-            students AS S ON S.studentid = C.studentid
-        JOIN 
-            teachers AS T ON C.teacherid = T.teacherid
+            classes AS C ON SCI.classid = C.classid
         WHERE 
-            T.studentid = ?`;
+            SCI.studentid = ?`;
             
     db.query(sql, [studentId], (err, results) => {
         if (err) return res.status(500).send(err);
         res.json(results);
+    });
+};
+
+// modify class info by teacher
+exports.updateEachClassTeacher = (req, res) => { 
+    const { classcode, studentname, classname, day, time, period, dateofpayment, hourlyrate, prepay, themecolor } = req.body;
+    const teacherId = req.userId;
+
+    console.log('Teacher ID:', req.userId);
+
+    const sql = `
+        UPDATE classes AS C
+        JOIN teachers AS T ON T.teacherid = C.teacherid
+        SET 
+            C.studentname = ?,
+            C.classname = ?, 
+            C.day = ?, 
+            C.time = ?, 
+            C.period = ?, 
+            C.dateofpayment = ?, 
+            C.hourlyrate = ?, 
+            C.prepay = ?, 
+            C.themecolor = ?,
+            C.updatedAt = NOW()
+        WHERE 
+            T.teacherid = ? 
+            AND C.classcode = ?`;
+            
+    db.query(sql, [teacherId], (err, results) => {
+        if (err) return res.status(500).send(err);
+
+        if (results.affectedRows === 0) {
+            return res.status(400).json({ message: 'No class found to update. Ensure you own the class and it exists.' });
+        }
+
+        res.json({ message: 'Class information updated successfully.' });
+    });
+};
+
+// modify class info by student
+exports.updateEachClassStudent = (req, res) => { 
+    const { classcode, teachername, classname, themecolor } = req.body;
+    const studentId = req.userId;
+
+    console.log('student ID:', studentId);
+
+    const sql = `
+        UPDATE student_classinfo AS SCI
+        JOIN students AS S ON S.studentid = SCI.studentid
+        JOIN classes AS C ON C.classid = SCI.classid
+        SET 
+            SCI.teachername = ?,
+            SCI.classname = ?, 
+            SCI.themecolor = ?,
+            SCI.updatedAt = NOW()
+        WHERE 
+            SCI.studentid = ? 
+            AND C.classcode = ?`;
+            
+    db.query(sql, [studentId], (err, results) => {
+        if (err) return res.status(500).send(err);
+
+        if (results.affectedRows === 0) {
+            return res.status(400).json({ message: 'No class found to update. Ensure you own the class and it exists.' });
+        }
+
+        res.json({ message: 'Class information updated successfully.' });
     });
 };
 

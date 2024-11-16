@@ -27,6 +27,17 @@ router.put('/joinClass', authenticateJWT, upload.none(), (req, res) => { // shou
     homeController.joinClass(req, res);
 });
 
+// modify class info by teacher
+router.put('/updateClassT', authenticateJWT, upload.none(), (req, res) => { // should delete upload.none()
+    console.log('Received data:', req.body);  // Log the incoming request data
+    homeController.updateEachClassTeacher(req, res);
+});
+// modify class info by student
+router.put('/updateClassS', authenticateJWT, upload.none(), (req, res) => { // should delete upload.none()
+    console.log('Received data:', req.body);  // Log the incoming request data
+    homeController.updateEachClassStudent(req, res);
+});
+
 router.get('/unwrittenFeedbackDates', authenticateJWT, homeController.getUnwrittenFeedbackDates);
 
 
