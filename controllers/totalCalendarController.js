@@ -74,23 +74,35 @@ exports.getAllClassStudent = (req, res) => {
 
 // for each date clicked in teacher's total calendar
 exports.getClassesByDateTeacher = (req, res) => {
-    const { date } = req.query;
+    const { date } = req.body;
     const teacherId = req.userId;
 
+    console.log("Received date:", date);
+
     const sql = `
-        SELECT C.classid, C.classname, C.time, C.themecolor,
-               CASE 
-                   WHEN D.feedback_written IS 0 THEN '피드백 완료'
-                   ELSE '피드백 미완료'
-               END AS feedbackStatus
-        FROM classes AS C
-        JOIN teachers AS T ON C.teacherid = T.teacherid
-        JOIN dates AS D ON C.classid = D.classid
-        LEFT JOIN feedback AS F ON F.dateid = D.dateid AND F.classid = C.classid
-        WHERE D.date = ? AND C.teacherid = ?;`;
+        SELECT 
+            C.classid, 
+            C.classname, 
+            C.themecolor,
+            CASE 
+                WHEN D.feedback_written = 1 THEN '피드백 완료'
+                ELSE '피드백 미완료'
+            END AS feedbackStatus
+        FROM 
+            classes AS C
+        JOIN 
+            teachers AS T ON C.teacherid = T.teacherid
+        JOIN 
+            dates AS D ON C.classid = D.classid
+        WHERE 
+            DATE(D.date) = ? AND C.teacherid = ?;
+        `;
 
     db.query(sql, [date, teacherId], (err, results) => {
         if (err) return res.status(500).send(err);
+
+        console.log("Query result:", results);
+
         res.json(results); 
     });
 };
@@ -98,23 +110,24 @@ exports.getClassesByDateTeacher = (req, res) => {
 
 // for each date clicked in student's total calendar 
 exports.getClassesByDateStudent = (req, res) => {
-    const { date } = req.query;
+    const { date } = req.body;
     const studentId = req.userId;
 
     const sql = `
-        SELECT C.classid, C.classname, C.time, C.themecolor,
+        SELECT C.classid, C.classname, C.themecolor,
                CASE 
-                   WHEN D.feedback_written IS 0 THEN '피드백 완료'
+                   WHEN D.feedback_written IS 1 THEN '피드백 완료'
                    ELSE '피드백 미완료'
                END AS feedbackStatus
         FROM classes AS C
         JOIN students AS T ON C.studentid = T.studentid
         JOIN dates AS D ON C.classid = D.classid
-        LEFT JOIN feedback AS F ON F.dateid = D.dateid AND F.classid = C.classid
-        WHERE D.date = ? AND C.studentid = ?;`;
+        WHERE 
+            DATE(D.date) = ? AND C.studentid = ?;`;
 
     db.query(sql, [date, studentId], (err, results) => {
         if (err) return res.status(500).send(err);
+        console.log("Query result:", results);
         res.json(results); 
     });
 };

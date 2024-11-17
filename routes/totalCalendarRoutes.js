@@ -11,18 +11,18 @@ router.get('/', totalCalendarController.getClassesid);
 router.get('/calendarT', authenticateJWT, (req, res) => {
     totalCalendarController.getAllClassTeacher(req, res);
 });
-// get classes information for total calendar for teacher
+// get classes information for total calendar for student
 router.get('/calendarS', authenticateJWT, (req, res) => {
     totalCalendarController.getAllClassStudent(req, res);
 });
 
-router.get('/classByDate', authenticateJWT, (req, res) => {
-    if (req.role === 'teacher'){
-        totalCalendarController.getClassesByDateTeacher(req, res);
-    }
-    else if(req.role === 'student'){
-        totalCalendarController.getClassesByDateStudent(req, res);
-    }
+// get classes for the date in total calendar for teacher
+router.get('/classByDateT', authenticateJWT, upload.none(), (req, res) => {
+    totalCalendarController.getClassesByDateTeacher(req, res);
+});
+// get classes for the date in total calendar for student
+router.get('/classByDateS', authenticateJWT, upload.none(), (req, res) => {
+    totalCalendarController.getClassesByDateStudent(req, res);
 });
 
 module.exports = router;

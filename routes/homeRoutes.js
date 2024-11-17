@@ -18,27 +18,30 @@ router.get('/eachClassS', authenticateJWT, (req, res) => {
 
 // create class for teacher
 router.post('/createClass', authenticateJWT, upload.none(), (req, res) => {
-    console.log('Received data:', req.body);  // Log the incoming request data
+    console.log('Received data:', req.body);
     homeController.createClassTeacher(req, res);
 });
 // join class for student
 router.put('/joinClass', authenticateJWT, upload.none(), (req, res) => { // should delete upload.none()
-    console.log('Received data:', req.body);  // Log the incoming request data
+    console.log('Received data:', req.body);
     homeController.joinClass(req, res);
 });
 
 // modify class info by teacher
 router.put('/updateClassT', authenticateJWT, upload.none(), (req, res) => { // should delete upload.none()
-    console.log('Received data:', req.body);  // Log the incoming request data
+    console.log('Received data:', req.body);
     homeController.updateEachClassTeacher(req, res);
 });
 // modify class info by student
 router.put('/updateClassS', authenticateJWT, upload.none(), (req, res) => { // should delete upload.none()
-    console.log('Received data:', req.body);  // Log the incoming request data
+    console.log('Received data:', req.body);
     homeController.updateEachClassStudent(req, res);
 });
 
-router.get('/unwrittenFeedbackDates', authenticateJWT, homeController.getUnwrittenFeedbackDates);
+// get unwritten feedback dates
+router.get('/noFeedback', authenticateJWT, upload.none(), (req, res) => {
+    homeController.getUnwrittenFeedbackDates(req, res);
+});
 
 
 module.exports = router;
