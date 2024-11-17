@@ -10,23 +10,95 @@ exports.getClasses = (req, res) => {
 
 // class created by teacher
 exports.createClassTeacher = (req, res) => {
-    const { classname, period, time, hourlyrate, prepay, themecolor } = req.body;
+    const { classname, period, time, day, hourlyrate, prepay, themecolor } = req.body;
     const userId = req.userId;
-
     console.log('Received data:', req.body);
     console.log('Authenticated teacher ID:', userId);
 
-    const classcode = uuidv4().split('-')[0];
+    const classcode = uuidv4().split('-')[0]; // create classcode
+    if (!day || typeof day !== 'string') {
+        return res.status(400).json({ message: 'Invalid or missing day field in request body.' });
+    }
 
-    // day 넣어야함!!!
-    const sql = 'INSERT INTO classes (classname, period, time, hourlyrate, prepay, themecolor, teacherid, classcode, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())';
-    db.query(sql, [classname, period, time, hourlyrate, prepay, themecolor, userId, classcode], (err, result) => {
-	    if (err) {
-            console.error('Database query error:', err); // Log any error from the database query
+    const sql = `INSERT INTO classes 
+                (classname, period, time, day, hourlyrate, prepay, themecolor, teacherid, classcode, dateofpayment, createdAt, updatedAt) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`;
+
+    const dayMapping = { "월": 1, "화": 2, "수": 3, "목": 4, "금": 5, "토": 6, "일": 0 };
+    const daysOfWeek = day.split(' ').map(d => dayMapping[d]).filter(d => d !== undefined);
+    if (daysOfWeek.length === 0) {
+        return res.status(400).json({ message: 'Invalid day input' });
+    }
+
+    const startDate = new Date();
+    const dates = [];
+
+    db.query(sql, [classname, period, time, day, hourlyrate, prepay, themecolor, userId, classcode, null], (err, result) => {
+        if (err) {
+            console.error('Database query error:', err);
             return res.status(500).send(err);
         }
 
-        res.status(201).json({ message: 'Class created successfully', classId: result.insertId, classname, classcode });
+        const classId = result.insertId;
+
+        let currentDate = new Date(startDate);
+        let count = 0;
+        while (count < period) {
+            if (daysOfWeek.includes(currentDate.getDay())) {
+                dates.push({
+                    classId,
+                    date: currentDate.toISOString().split('T')[0], // format as YYYY-MM-DD
+                    time,
+                    feedback_written: false,
+                });
+                count++;
+            }
+            currentDate.setDate(currentDate.getDate() + 1); // move to the next day
+        }
+
+        const prepayValue = Number(prepay);
+
+        // determine the `dateofpayment`
+        const dateofpayment = prepayValue === 0
+            ? dates[dates.length - 1].date // last date
+            : dates[0].date; // first date
+
+        // update `dateofpayment` in the `classes` table
+        const updateSql = `UPDATE classes SET dateofpayment = ? WHERE classid = ?`;
+        db.query(updateSql, [dateofpayment, classId], (updateErr) => {
+            if (updateErr) {
+                console.error('Database update error:', updateErr);
+                return res.status(500).send(updateErr);
+            }
+
+            // insert generated dates into the `dates` table
+            const sqlDates = `INSERT INTO dates (classid, date, time, feedback_written, createdAt, updatedAt) 
+                              VALUES (?, ?, ?, ?, NOW(), NOW())`;
+            const dateInserts = dates.map(({ classId, date, time, feedback_written }) =>
+                new Promise((resolve, reject) => {
+                    db.query(sqlDates, [classId, date, time, feedback_written], (err, result) => {
+                        if (err) reject(err);
+                        else resolve(result);
+                    });
+                })
+            );
+
+            Promise.all(dateInserts)
+                .then(() => {
+                    res.status(201).json({
+                        message: 'Class and dates created successfully',
+                        classId,
+                        classname,
+                        classcode,
+                        dateofpayment,
+                        dates: dates.map(d => d.date),
+                    });
+                })
+                .catch(err => {
+                    console.error('Database query error (dates):', err);
+                    res.status(500).send(err);
+                });
+        });
     });
 };
 

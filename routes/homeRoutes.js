@@ -17,7 +17,7 @@ router.get('/eachClassS', authenticateJWT, (req, res) => {
 });
 
 // create class for teacher
-router.post('/createClass', authenticateJWT, (req, res) => {
+router.post('/createClass', authenticateJWT, upload.none(), (req, res) => {
     console.log('Received data:', req.body);  // Log the incoming request data
     homeController.createClassTeacher(req, res);
 });
