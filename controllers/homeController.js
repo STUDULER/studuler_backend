@@ -10,7 +10,7 @@ exports.getClasses = (req, res) => {
 
 // class created by teacher
 exports.createClassTeacher = (req, res) => {
-    const { classname, period, time, day, hourlyrate, prepay, themecolor } = req.body;
+    const { classname, studentname, startdate, period, time, day, hourlyrate, prepay, themecolor } = req.body;
     const userId = req.userId;
     console.log('Received data:', req.body);
     console.log('Authenticated teacher ID:', userId);
@@ -21,11 +21,11 @@ exports.createClassTeacher = (req, res) => {
     }
 
     const sql = `INSERT INTO classes 
-                (classname, period, time, day, hourlyrate, prepay, themecolor, teacherid, classcode, dateofpayment, createdAt, updatedAt) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`;
+                (classname, studentname, period, time, day, hourlyrate, prepay, themecolor, teacherid, classcode, dateofpayment, createdAt, updatedAt) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`;
 
     const dayMapping = { "월": 1, "화": 2, "수": 3, "목": 4, "금": 5, "토": 6, "일": 0 };
-    const daysOfWeek = day.split(' ').map(d => dayMapping[d]).filter(d => d !== undefined);
+    const daysOfWeek = day.split('/').map(d => dayMapping[d]).filter(d => d !== undefined);
     if (daysOfWeek.length === 0) {
         return res.status(400).json({ message: 'Invalid day input' });
     }
@@ -33,7 +33,7 @@ exports.createClassTeacher = (req, res) => {
     const startDate = new Date();
     const dates = [];
 
-    db.query(sql, [classname, period, time, day, hourlyrate, prepay, themecolor, userId, classcode, null], (err, result) => {
+    db.query(sql, [classname, studentname, period, time, day, hourlyrate, prepay, themecolor, userId, classcode, null], (err, result) => {
         if (err) {
             console.error('Database query error:', err);
             return res.status(500).send(err);
