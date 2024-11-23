@@ -30,7 +30,10 @@ exports.createClassTeacher = (req, res) => {
         return res.status(400).json({ message: 'Invalid day input' });
     }
 
-    const startDate = new Date();
+    const startDate = new Date(startdate);
+    if (isNaN(startDate)) {
+        return res.status(400).json({ message: 'Invalid startdate format' });
+    }
     const dates = [];
 
     db.query(sql, [classname, studentname, period, time, day, hourlyrate, prepay, themecolor, userId, classcode, null], (err, result) => {
@@ -312,7 +315,7 @@ exports.getUnwrittenFeedbackDates = (req, res) => {
             D.classId = ? AND C.teacherid = ? 
             AND F.dateid IS NULL AND D.feedback_written = 0`;
 
-    db.query(sql, [teacherId], (err, results) => {
+    db.query(sql, [classId, teacherId], (err, results) => {
         if (err) return res.status(500).send(err);
         res.json(results);
     });

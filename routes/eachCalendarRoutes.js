@@ -5,21 +5,25 @@ const upload = multer({ storage: multer.memoryStorage() });
 const eachCalendarController = require('../controllers/eachCalendarController');
 const authenticateJWT = require('../jwt/auth');
 
-router.get('/eachCalendar', authenticateJWT, (req, res) => {
-    if (req.role === 'teacher'){
-        eachCalendarController.getEachCalendarTeacher(req, res);
-    }
-    else if(req.role === 'student'){
-        eachCalendarController.getEachCalendarStudent(req, res);
-    }
+router.get('/calendarT', authenticateJWT, (req, res) => {
+    eachCalendarController.getEachCalendarTeacher(req, res)
 });
-router.get('/classByDate', authenticateJWT, (req, res) => {
-    if (req.role === 'teacher'){
-        eachCalendarController.getFeedbackByDateTeacher(req, res);
-    }
-    else if(req.role === 'student'){
-        eachCalendarController.getFeedbackByDateStudent(req, res);
-    }
+router.get('/calendarS', authenticateJWT, (req, res) => {
+    eachCalendarController.getEachCalendarStudent(req, res)
+});
+
+router.get('/feedbackByDateT', authenticateJWT, (req, res) => {
+    eachCalendarController.getFeedbackByDateTeacher(req, res);
+});
+router.get('/feedbackByDateS', authenticateJWT, (req, res) => {
+    eachCalendarController.getFeedbackByDateStudent(req, res);
+});
+
+router.post('/createFeedback', authenticateJWT, upload.none(), (req, res) => {
+    eachCalendarController.createFeedback(req, res);
+});
+router.put('/editFeedback', authenticateJWT, upload.none(), (req, res) => {
+    eachCalendarController.editFeedback(req, res);
 });
 
 module.exports = router;
