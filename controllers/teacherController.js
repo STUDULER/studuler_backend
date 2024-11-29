@@ -27,7 +27,7 @@ exports.signupTeacher = (req, res) => {
             return res.status(500).send(err);
         }
 
-        const token = jwt.sign({ userId: result.insertId, role: 'teacher' }, JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ userId: result.insertId, role: 'teacher' }, JWT_SECRET, { expiresIn: '8h' });
         res.status(201).json({ userId: result.insertId, role: 'teacher', username, password, account, bank, name, mail, loginMethod, imageNum, createdAt: new Date(), updatedAt: new Date(), token });
     });
 };
@@ -42,7 +42,7 @@ exports.loginTeacher = (req, res) => {
         if (results.length === 0) return res.status(401).send('Invalid credentials');
 
         const teacher = results[0];
-        const token = jwt.sign({ userId: teacher.teacherid, role: 'teacher' }, JWT_SECRET, { expiresIn: '3h' });
+        const token = jwt.sign({ userId: teacher.teacherid, role: 'teacher' }, JWT_SECRET, { expiresIn: '8h' });
 
         res.json({ token });
     });

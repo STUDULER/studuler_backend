@@ -21,7 +21,7 @@ exports.signupStudent = (req, res) => {
     db.query(sql, [username, password, name, mail, loginMethod, imageNum], (err, result) => {
         if (err) return res.status(500).send(err);
 
-        const token = jwt.sign({ userId: result.insertId, role: 'student' }, JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ userId: result.insertId, role: 'student' }, JWT_SECRET, { expiresIn: '8h' });
         res.status(201).json({ userId: result.insertId, role: 'student', username, password, name, mail, loginMethod, imageNum, token });
     });
 };
@@ -36,7 +36,7 @@ exports.loginStudent = (req, res) => {
         if (results.length === 0) return res.status(401).send('Invalid credentials');
 
         const student = results[0];
-        const token = jwt.sign({ userId: student.studentid, role: 'student' }, JWT_SECRET, { expiresIn: '3h' });
+        const token = jwt.sign({ userId: student.studentid, role: 'student' }, JWT_SECRET, { expiresIn: '8h' });
 
         res.json({ token });
     });
