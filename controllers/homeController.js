@@ -60,15 +60,29 @@ exports.createClassTeacher = (req, res) => {
         }
 
         const prepayValue = Number(prepay);
+        const hourlyRate = Number(hourlyrate);
+        const classTime = Number(time);
+        const totalCost = hourlyRate * classTime * period;
 
         // determine the `dateofpayment`
         const dateofpayment = prepayValue === 0
             ? dates[dates.length - 1].date // last date
             : dates[0].date; // first date
+        const unpaid = true;
 
-        // update `dateofpayment` in the `classes` table
-        const updateSql = `UPDATE classes SET dateofpayment = ? WHERE classid = ?`;
-        db.query(updateSql, [dateofpayment, classId], (updateErr) => {
+        // create payment tuple
+        const sqlInsertPayment = `INSERT INTO payment (date, cost, unpay, classid, createdAt, updatedAt) VALUES (?, ?, ?, ?, NOW(), NOW())`;
+        db.query(sqlInsertPayment, [dateofpayment, totalCost, unpaid, classId], (paymentErr, paymentResult) => {
+            if (paymentErr) {
+                console.error('Database query error (insert payment):', paymentErr);
+                return res.status(500).send(paymentErr);
+            }
+    
+            const paymentId = paymentResult.insertId;
+        
+        // update paymentid in the `classes` table
+        const sqlUpdateClassPaymentId = `UPDATE classes SET paymentid = ? WHERE classid = ?`;
+        db.query(updateSql, [paymentId, classId], (updateErr) => {
             if (updateErr) {
                 console.error('Database update error:', updateErr);
                 return res.status(500).send(updateErr);
@@ -103,6 +117,7 @@ exports.createClassTeacher = (req, res) => {
                 });
         });
     });
+});
 };
 
 // student joins class

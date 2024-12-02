@@ -26,4 +26,11 @@ router.put('/editFeedback', authenticateJWT, upload.none(), (req, res) => {
     eachCalendarController.editFeedback(req, res);
 });
 
+router.put('/deleteLesson', authenticateJWT, upload.none(), (req, res) => {
+    eachCalendarController.deleteLesson(req, res);
+});
+router.post('/addLesson', authenticateJWT, upload.none(), (req, res) => {
+    eachCalendarController.addNewLesson(req, res);
+});
+
 module.exports = router;

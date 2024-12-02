@@ -5,6 +5,7 @@ const studentRoutes = require('./routes/studentRoutes');
 const homeRoutes = require('./routes/homeRoutes');
 const totalRoutes = require('./routes/totalCalendarRoutes');
 const eachRoutes = require('./routes/eachCalendarRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 const authenticateJWT = require('./jwt/auth');
 const PORT = 80;
 
@@ -17,6 +18,7 @@ app.use('/students', studentRoutes);
 app.use("/home", homeRoutes);
 app.use("/total", totalRoutes);
 app.use("/each", eachRoutes);
+app.use("/payment", paymentRoutes);
 
 app.get('/', (req, res) => {
     res.send('Welcome to STUDULER');
