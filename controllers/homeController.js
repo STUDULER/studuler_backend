@@ -198,13 +198,27 @@ exports.getEachClassTeacher = (req, res) => {
             C.dateofpayment, 
             C.hourlyrate, 
             C.prepay, 
-            C.themecolor 
+            C.themecolor,
+            IFNULL(FinishedLessons.finished_count, 0) AS finished_lessons
         FROM 
             classes AS C
         JOIN 
             teachers AS T ON T.teacherid = C.teacherid
         LEFT JOIN
             students AS S ON C.studentid = S.studentid AND C.studentid IS NOT NULL
+        LEFT JOIN
+            SELECT 
+                D.classid, 
+                COUNT(D.date) AS finished_count
+            FROM 
+                dates AS D
+            JOIN 
+                classes AS C ON D.classid = C.classid
+            WHERE 
+                D.date <= CURDATE()
+            GROUP BY 
+                D.classid
+        ) AS FinishedLessons ON C.classid = FinishedLessons.classid
         WHERE 
             T.teacherid = ?`;
             
@@ -231,11 +245,25 @@ exports.getEachClassStudent = (req, res) => {
             C.dateofpayment, 
             C.hourlyrate, 
             C.prepay, 
-            SCI.themecolor 
+            SCI.themecolor,
+            IFNULL(FinishedLessons.finished_count, 0) AS finished_lessons
         FROM 
             student_classinfo AS SCI
         JOIN 
             classes AS C ON SCI.classid = C.classid
+        LEFT JOIN
+            SELECT 
+                D.classid, 
+                COUNT(D.date) AS finished_count
+            FROM 
+                dates AS D
+            JOIN 
+                classes AS C ON D.classid = C.classid
+            WHERE 
+                D.date <= CURDATE()
+            GROUP BY 
+                D.classid
+        ) AS FinishedLessons ON C.classid = FinishedLessons.classid
         WHERE 
             SCI.studentid = ?`;
             
