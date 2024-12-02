@@ -82,7 +82,7 @@ exports.createClassTeacher = (req, res) => {
         
         // update paymentid in the `classes` table
         const sqlUpdateClassPaymentId = `UPDATE classes SET paymentid = ? WHERE classid = ?`;
-        db.query(updateSql, [paymentId, classId], (updateErr) => {
+        db.query(sqlUpdateClassPaymentId, [paymentId, classId], (updateErr) => {
             if (updateErr) {
                 console.error('Database update error:', updateErr);
                 return res.status(500).send(updateErr);
