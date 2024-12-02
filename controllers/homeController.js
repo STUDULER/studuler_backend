@@ -223,7 +223,10 @@ exports.getEachClassTeacher = (req, res) => {
             T.teacherid = ?`;
             
     db.query(sql, [teacherId], (err, results) => {
-        if (err) return res.status(500).send(err);
+        if (err) {
+            console.error('Error executing the query:', err);
+            return res.status(500).send(err);
+        }
         res.json(results);
     });
 };
