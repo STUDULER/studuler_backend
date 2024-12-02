@@ -206,7 +206,7 @@ exports.getEachClassTeacher = (req, res) => {
             teachers AS T ON T.teacherid = C.teacherid
         LEFT JOIN
             students AS S ON C.studentid = S.studentid AND C.studentid IS NOT NULL
-        LEFT JOIN
+        LEFT JOIN (
             SELECT 
                 D.classid, 
                 COUNT(D.date) AS finished_count
