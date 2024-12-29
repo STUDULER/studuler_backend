@@ -1,21 +1,27 @@
 const db = require('../config/db');
 const { v4: uuidv4 } = require('uuid');
 
-exports.getClasses = (req, res) => {
-    db.query('SELECT * FROM classes', (err, results) => {
-        if (err) return res.status(500).send(err);
+exports.getClasses = async (req, res) => {
+    try{
+        const [results] = await db.query('SELECT * FROM classes');
         res.json(results);
-    });
+    }
+    catch (err) {
+        console.error('Database query error:', err);
+        res.status(500).send(err);
+    }
 };
 
 // class created by teacher
-exports.createClassTeacher = (req, res) => {
+exports.createClassTeacher = async (req, res) => {
     const { classname, studentname, startdate, period, time, day, hourlyrate, prepay, themecolor } = req.body;
     const userId = req.userId;
     console.log('Received data:', req.body);
     console.log('Authenticated teacher ID:', userId);
 
     const classcode = uuidv4().split('-')[0]; // create classcode
+
+    try{
     if (!day || typeof day !== 'string') {
         return res.status(400).json({ message: 'Invalid or missing day field in request body.' });
     }
@@ -34,15 +40,18 @@ exports.createClassTeacher = (req, res) => {
     if (isNaN(startDate)) {
         return res.status(400).json({ message: 'Invalid startdate format' });
     }
+
+
+        const connection = await db.getConnection();
+        await connection.beginTransaction();
+
+        try {
+
     const dates = [];
 
-    db.query(sql, [classname, studentname, period, time, day, hourlyrate, prepay, themecolor, userId, classcode, null], (err, result) => {
-        if (err) {
-            console.error('Database query error:', err);
-            return res.status(500).send(err);
-        }
+    const [classResult] = await connection.query(sql, [classname, studentname, period, time, day, hourlyrate, prepay, themecolor, userId, classcode, null]);
 
-        const classId = result.insertId;
+        const classId = classResult.insertId;
 
         let currentDate = new Date(startDate);
         let count = 0;
@@ -72,79 +81,60 @@ exports.createClassTeacher = (req, res) => {
 
         // create payment tuple
         const sqlInsertPayment = `INSERT INTO payment (date, cost, unpay, classid, createdAt, updatedAt) VALUES (?, ?, ?, ?, NOW(), NOW())`;
-        db.query(sqlInsertPayment, [dateofpayment, totalCost, unpaid, classId], (paymentErr, paymentResult) => {
-            if (paymentErr) {
-                console.error('Database query error (insert payment):', paymentErr);
-                return res.status(500).send(paymentErr);
-            }
-    
+        const [paymentResult] = await connection.query(sqlInsertPayment, [dateofpayment, totalCost, unpaid, classId]);
             const paymentId = paymentResult.insertId;
         
         // update paymentid in the `classes` table
         const sqlUpdateClassPaymentId = `UPDATE classes SET paymentid = ? WHERE classid = ?`;
-        db.query(sqlUpdateClassPaymentId, [paymentId, classId], (updateErr) => {
-            if (updateErr) {
-                console.error('Database update error:', updateErr);
-                return res.status(500).send(updateErr);
-            }
+        await connection.query(sqlUpdateClassPaymentId, [paymentId, classId]);
 
             // insert generated dates into the `dates` table
-            const sqlDates = `INSERT INTO dates (classid, date, time, feedback_written, createdAt, updatedAt) 
-                              VALUES (?, ?, ?, ?, NOW(), NOW())`;
-            const dateInserts = dates.map(({ classId, date, time, feedback_written }) =>
-                new Promise((resolve, reject) => {
-                    db.query(sqlDates, [classId, date, time, feedback_written], (err, result) => {
-                        if (err) reject(err);
-                        else resolve(result);
-                    });
-                })
-            );
+            for (const dateObj of dates) {
+                await connection.query(
+                    `INSERT INTO dates (classid, date, time, feedback_written, createdAt, updatedAt) 
+                    VALUES (?, ?, ?, ?, NOW(), NOW())`,
+                    [dateObj.classId, dateObj.date, dateObj.time, dateObj.feedback_written]
+                );
+            }
 
-            Promise.all(dateInserts)
-                .then(() => {
-                    res.status(201).json({
-                        message: 'Class and dates created successfully',
-                        classId,
-                        classname,
-                        classcode,
-                        dateofpayment,
-                        dates: dates.map(d => d.date),
-                    });
-                })
-                .catch(err => {
-                    console.error('Database query error (dates):', err);
-                    res.status(500).send(err);
-                });
-        });
-    });
-});
+            await connection.commit();
+            res.status(201).json({
+                message: 'Class and dates created successfully',
+                classId,
+                classname,
+                classcode,
+                dateofpayment,
+                dates: dates.map(d => d.date)
+            });
+
+        } catch (err) {
+            await connection.rollback();
+            throw err;
+        } finally {
+            connection.release();
+        }
+    } catch (err){
+        console.error('Database query error:', err);
+        res.status(500).send(err);
+    }
 };
 
 // student joins class
-exports.joinClass = (req, res) => {
+exports.joinClass = async (req, res) => {
     const { classcode } = req.body;
     const userId = req.userId;
 
     console.log('Received data:', req.body);
     console.log('Authenticated student ID:', userId);
 
-    const sql = 'UPDATE classes SET studentid = ? WHERE classcode = ? AND studentid IS NULL';
+    const connection = await db.getConnection();
 
-    // 두개 query 적용 위해 transaction 사용
-    db.beginTransaction((err) => {
-        if (err) {
-            console.error('Transaction start error:', err);
-            return res.status(500).send(err);
-        }
+    try{
+    await connection.beginTransaction();
 
-        // insert studentid in classes relation
-        const updateClassSql = 'UPDATE classes SET studentid = ? WHERE classcode = ? AND studentid IS NULL';
-        db.query(updateClassSql, [userId, classcode], (updateErr, updateResult) => {
-            if (updateErr) {
-                console.error('Database query error:', updateErr);
-                return db.rollback(() => res.status(500).send(updateErr));
-            }
-
+            // insert studentid in classes relation
+    const updateClassSql = 'UPDATE classes SET studentid = ? WHERE classcode = ? AND studentid IS NULL';
+    const [updateResult] = await connection.query(updateClassSql, [userId, classcode]);
             if (updateResult.affectedRows === 0) {
                 // No rows updated, rollback transaction
                 return db.rollback(() => {
@@ -160,27 +150,26 @@ exports.joinClass = (req, res) => {
                 JOIN teachers t ON c.teacherid = t.teacherid
                 WHERE c.classcode = ?
             `;
-            db.query(insertClassInfoSql, [userId, classcode], (insertErr, insertResult) => {
-                if (insertErr) {
-                    console.error('Database query error:', insertErr);
-                    return db.rollback(() => res.status(500).send(insertErr));
-                }
+            await connection.query(insertClassInfoSql, [userId, classcode]);
 
-                db.commit((commitErr) => {
-                    if (commitErr) {
-                        console.error('Transaction commit error:', commitErr);
-                        return db.rollback(() => res.status(500).send(commitErr));
-                    }
-
+            await connection.commit();
                     res.status(200).json({ message: 'Successfully joined the class and updated class info.' });
-                });
-            });
-        });
-    });
+                } catch (err) {
+                    // If anything goes wrong, rollback the transaction
+                    await connection.rollback();
+                    console.error('Database error:', err);
+                    res.status(500).json({ 
+                        error: 'Failed to join class', 
+                        details: err.message 
+                    });
+                } finally {
+                    // Always release the connection back to the pool
+                    connection.release();
+                }
 };
 
 // each class information for teacher's home screen
-exports.getEachClassTeacher = (req, res) => { 
+exports.getEachClassTeacher = async (req, res) => { 
     const teacherId = req.userId;
 
     console.log('Teacher ID:', req.userId);
@@ -221,18 +210,19 @@ exports.getEachClassTeacher = (req, res) => {
         ) AS FinishedLessons ON C.classid = FinishedLessons.classid
         WHERE 
             T.teacherid = ?`;
-            
-    db.query(sql, [teacherId], (err, results) => {
-        if (err) {
-            console.error('Error executing the query:', err);
-            return res.status(500).send(err);
-        }
+     
+    try {
+        const [results] = await db.query(sql, [teacherId]);
         res.json(results);
-    });
+    }
+    catch (err) {
+        console.error('Error executing the query:', err);
+        res.status(500).send(err);
+    }
 };
 
 // each class information for student's home screen
-exports.getEachClassStudent = (req, res) => {
+exports.getEachClassStudent = async (req, res) => {
     const studentId = req.studentId;
 
     // 선생이름, 요일, 정산방법, 수업횟수, 다음정산일, 수업코드, 제목, 진행수업횟수, 테마색상
@@ -269,15 +259,19 @@ exports.getEachClassStudent = (req, res) => {
         ) AS FinishedLessons ON C.classid = FinishedLessons.classid
         WHERE 
             SCI.studentid = ?`;
-            
-    db.query(sql, [studentId], (err, results) => {
-        if (err) return res.status(500).send(err);
+        
+    try {
+    const [results] = await db.query(sql, [studentId]);
         res.json(results);
-    });
+    }
+    catch (err) {
+        console.error('Error executing the query:', err);
+        res.status(500).send(err);
+    }
 };
 
 // modify class info by teacher
-exports.updateEachClassTeacher = (req, res) => { 
+exports.updateEachClassTeacher = async (req, res) => { 
     const { classcode, studentname, classname, day, time, period, dateofpayment, hourlyrate, prepay, themecolor } = req.body;
     const teacherId = req.userId;
 
@@ -300,20 +294,24 @@ exports.updateEachClassTeacher = (req, res) => {
         WHERE 
             T.teacherid = ? 
             AND C.classcode = ?`;
-            
-    db.query(sql, [teacherId], (err, results) => {
-        if (err) return res.status(500).send(err);
+          
+    try {
+        const [results] = await db.query(sql, [teacherId]);
 
         if (results.affectedRows === 0) {
             return res.status(400).json({ message: 'No class found to update. Ensure you own the class and it exists.' });
         }
 
         res.json({ message: 'Class information updated successfully.' });
-    });
+    }
+    catch (err) {
+        console.error('Error executing the query:', err);
+        res.status(500).send(err);
+    }
 };
 
 // modify class info by student
-exports.updateEachClassStudent = (req, res) => { 
+exports.updateEachClassStudent = async (req, res) => { 
     const { classcode, teachername, classname, themecolor } = req.body;
     const studentId = req.userId;
 
@@ -331,20 +329,24 @@ exports.updateEachClassStudent = (req, res) => {
         WHERE 
             SCI.studentid = ? 
             AND C.classcode = ?`;
-            
-    db.query(sql, [studentId], (err, results) => {
-        if (err) return res.status(500).send(err);
+    
+    try {
+        const [results] = await db.query(sql, [studentId]);
 
         if (results.affectedRows === 0) {
             return res.status(400).json({ message: 'No class found to update. Ensure you own the class and it exists.' });
         }
 
         res.json({ message: 'Class information updated successfully.' });
-    });
+    }
+    catch (err) {
+        console.error('Error executing the query:', err);
+        res.status(500).send(err);
+    }
 };
 
 // list of dates with unwritten feedback for teacher
-exports.getUnwrittenFeedbackDates = (req, res) => {
+exports.getUnwrittenFeedbackDates = async (req, res) => {
     const { classId } = req.query;
     const teacherId = req.teacherId; // Authenticated teacherId from JWT
 
@@ -361,8 +363,12 @@ exports.getUnwrittenFeedbackDates = (req, res) => {
             D.classId = ? AND C.teacherid = ? 
             AND F.dateid IS NULL AND D.feedback_written = 0`;
 
-    db.query(sql, [classId, teacherId], (err, results) => {
-        if (err) return res.status(500).send(err);
+    try {
+        const [results] = await db.query(sql, [classId, teacherId]);
         res.json(results);
-    });
+    }
+    catch (err) {
+        console.error('Error executing the query:', err);
+        res.status(500).send(err);
+    }
 };

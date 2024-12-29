@@ -1,16 +1,20 @@
 const db = require('../config/db');
 
-exports.getClassesid = (req, res) => {
+exports.getClassesid = async (req, res) => {
     const teacherId = req.userId;
 
-    db.query('SELECT C.classid FROM classes AS C, teachers AS T WHERE C.teacherid = T.teacherid', [teacherId], (err, results) => {
-        if (err) return res.status(500).send(err);
+    try {
+        const [results] = await db.query('SELECT C.classid FROM classes AS C, teachers AS T WHERE C.teacherid = T.teacherid', [teacherId]);
         res.json(results);
-    });
+    }
+    catch (err){
+        console.error('Database query error:', err);
+        res.status(500).send(err);
+    }
 };
 
 // all class information for a teacher's total calendar
-exports.getAllClassTeacher = (req, res) => {
+exports.getAllClassTeacher = async (req, res) => {
     const teacherId = req.userId;
     console.log('Teacher ID from JWT:', teacherId);
 
@@ -34,15 +38,19 @@ exports.getAllClassTeacher = (req, res) => {
             dates AS D ON D.classid = C.classid
         WHERE 
             C.teacherid = ?`;
-            
-    db.query(sql, [teacherId], (err, results) => {
-        if (err) return res.status(500).send(err);
+    
+    try{
+        const [results] = await db.query(sql, [teacherId]);
         res.json(results);
-    });
+    }
+    catch (err) {
+        console.error('Database query error:', err);
+        res.status(500).send(err);
+    }
 };
 
 // all class information for a student's total calendar
-exports.getAllClassStudent = (req, res) => {
+exports.getAllClassStudent = async (req, res) => {
     const studentId = req.userId;
 
     // 학생이름, 요일, 정산방법, 수업횟수, 다음정산일, 수업코드, 제목, 진행수업횟수, 테마색상
@@ -65,15 +73,19 @@ exports.getAllClassStudent = (req, res) => {
             dates AS D ON D.classid = C.classid
         WHERE 
             C.studentid = ?`;
-            
-    db.query(sql, [studentId], (err, results) => {
-        if (err) return res.status(500).send(err);
+    
+    try {
+        const [results] = await db.query(sql, [studentId]);
         res.json(results);
-    });
+    }
+    catch (err){
+        console.error('Database query error:', err);
+        res.status(500).send(err);
+    }
 };
 
 // for each date clicked in teacher's total calendar
-exports.getClassesByDateTeacher = (req, res) => {
+exports.getClassesByDateTeacher = async (req, res) => {
     const { date } = req.body;
     const teacherId = req.userId;
 
@@ -98,18 +110,21 @@ exports.getClassesByDateTeacher = (req, res) => {
             DATE(D.date) = ? AND C.teacherid = ?;
         `;
 
-    db.query(sql, [date, teacherId], (err, results) => {
-        if (err) return res.status(500).send(err);
-
+    try{
+        const [results] = await db.query(sql, [date, teacherId]);
         console.log("Query result:", results);
 
         res.json(results); 
-    });
+    }
+    catch (err){
+        console.error('Database query error:', err);
+        res.status(500).send(err);
+    }
 };
 
 
 // for each date clicked in student's total calendar 
-exports.getClassesByDateStudent = (req, res) => {
+exports.getClassesByDateStudent = async (req, res) => {
     const { date } = req.body;
     const studentId = req.userId;
 
@@ -125,9 +140,13 @@ exports.getClassesByDateStudent = (req, res) => {
         WHERE 
             DATE(D.date) = ? AND C.studentid = ?;`;
 
-    db.query(sql, [date, studentId], (err, results) => {
-        if (err) return res.status(500).send(err);
+    try{
+        const [results] = await db.query(sql, [date, studentId]);
         console.log("Query result:", results);
         res.json(results); 
-    });
+    }
+    catch (err) {
+        console.error('Database query error:', err);
+        res.status(500).send(err);
+    }
 };

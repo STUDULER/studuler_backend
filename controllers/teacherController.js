@@ -4,46 +4,52 @@ require('dotenv').config();
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
-exports.getTeachers = (req, res) => {
-    db.query('SELECT * FROM teachers', (err, results) => {
-        if (err) return res.status(500).send(err);
+exports.getTeachers = async (req, res) => {
+    try {
+        const [results] = await db.query('SELECT * FROM teachers');
         res.json(results);
-    });
+    }
+    catch (err){
+        console.error('Database query error:', err);
+        res.status(500).send(err);
+    }
 };
 
 // when teacher signs up
-exports.signupTeacher = (req, res) => {
+exports.signupTeacher = async (req, res) => {
     const { username, password, account, bank, name, mail, loginMethod, imageNum } = req.body;
-    /*if (!username ){//|| !image) {
-        return res.status(400).send('Username and image are required.');
-    }*/
     console.log('Received data:', req.body);
 
     const sql = 'INSERT INTO teachers (username, password, account, bank, name, mail, loginMethod, imageNum, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())';
-    db.query(sql, [username, password, account, bank, name, mail, loginMethod, imageNum], (err, result) => {
+    try{
+        const [result] =  await db.query(sql, [username, password, account, bank, name, mail, loginMethod, imageNum]);
         //if (err) return res.status(500).send(err);
-	if (err) {
-            console.error('Database query error:', err); // Log any error from the database query
-            return res.status(500).send(err);
-        }
 
         const token = jwt.sign({ userId: result.insertId, role: 'teacher' }, JWT_SECRET, { expiresIn: '8h' });
         res.status(201).json({ userId: result.insertId, role: 'teacher', username, password, account, bank, name, mail, loginMethod, imageNum, createdAt: new Date(), updatedAt: new Date(), token });
-    });
+    }
+    catch (err){
+        console.error('Database query error:', err);
+        res.status(500).send(err);
+    }
 };
 
 // jwt token for authentication when logs in
-exports.loginTeacher = (req, res) => {
+exports.loginTeacher = async (req, res) => {
     const { username, password } = req.body;
     const sql = 'SELECT * FROM teachers WHERE username = ? AND password = ?';
 
-    db.query(sql, [username, password], (err, results) => {
-        if (err) return res.status(500).send(err);
+    try{
+        const [results] = await db.query(sql, [username, password]);
         if (results.length === 0) return res.status(401).send('Invalid credentials');
 
         const teacher = results[0];
         const token = jwt.sign({ userId: teacher.teacherid, role: 'teacher' }, JWT_SECRET, { expiresIn: '8h' });
 
         res.json({ token });
-    });
+    }
+    catch (err){
+        console.error('Database query error:', err);
+        return res.status(500).send(err);
+    }
 };
