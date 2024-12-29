@@ -23,7 +23,6 @@ exports.signupTeacher = async (req, res) => {
     const sql = 'INSERT INTO teachers (username, password, account, bank, name, mail, loginMethod, imageNum, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())';
     try{
         const [result] =  await db.query(sql, [username, password, account, bank, name, mail, loginMethod, imageNum]);
-        //if (err) return res.status(500).send(err);
 
         const token = jwt.sign({ userId: result.insertId, role: 'teacher' }, JWT_SECRET, { expiresIn: '8h' });
         res.status(201).json({ userId: result.insertId, role: 'teacher', username, password, account, bank, name, mail, loginMethod, imageNum, createdAt: new Date(), updatedAt: new Date(), token });

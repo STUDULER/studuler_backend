@@ -19,7 +19,7 @@ exports.getEachCalendarTeacher = async (req, res) => {
             dates AS D ON D.classid = C.classid
         WHERE 
             C.classid = ? AND C.teacherid = ?`;
-       
+
     try {
         const [results] = await db.query(sql, [classId, teacherId]);
         res.json(results);
@@ -52,7 +52,7 @@ exports.getEachCalendarStudent = async (req, res) => {
             dates AS D ON D.classid = C.classid
         WHERE 
             C.classid = ? AND C.studentid = ?`;
-       
+
     try {
         const [results] = await db.query(sql, [classId, studentId]);
         res.json(results);
@@ -91,9 +91,9 @@ exports.getFeedbackByDateTeacher = async (req, res) => {
         LEFT JOIN feedback AS F ON F.dateid = D.dateid AND F.classid = C.classid
         WHERE D.date = ? AND D.classid = ? AND C.teacherid = ?;`;
 
-    try{
+    try {
         const [results] = await db.query(sql, [date, classId, teacherId]);
-        res.json(results); 
+        res.json(results);
     }
     catch (err) {
         console.error('Error executing the query:', err);
@@ -130,9 +130,9 @@ exports.getFeedbackByDateStudent = async (req, res) => {
         LEFT JOIN feedback AS F ON F.dateid = D.dateid AND F.classid = C.classid
         WHERE D.date = ? AND D.classid = ? AND C.teacherid = ?;`;
 
-    try{
+    try {
         const [results] = await db.query(sql, [date, classId, studentId]);
-        res.json(results); 
+        res.json(results);
     }
     catch (err) {
         console.error('Error executing the query:', err);
@@ -168,7 +168,7 @@ exports.createFeedback = async (req, res) => {
         // insert feedback
         const sql = 'INSERT INTO feedback (dateid, workdone, attitude, homework, memo, rate, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())';
         const [insertResults] = await connection.query(sql, [dateid, workdone, attitude, homework, memo, rate]);
-        
+
         // Update feedback_written flag in dates table
         const updateDateSql = `
             UPDATE dates 
@@ -180,19 +180,19 @@ exports.createFeedback = async (req, res) => {
 
         await connection.commit();
         res.status(201).json({
-                message: 'Feedback created successfully',
-                feedbackId: insertResults.insertId, // new feedback id
-            });
-        } catch (err) {
-            await connection.rollback();
-            console.error('Error in createFeedback:', err);
-            res.status(500).json({ 
-                error: 'Failed to create feedback',
-                details: err.message 
-            });
-        } finally {
-            connection.release();
-        }
+            message: 'Feedback created successfully',
+            feedbackId: insertResults.insertId, // new feedback id
+        });
+    } catch (err) {
+        await connection.rollback();
+        console.error('Error in createFeedback:', err);
+        res.status(500).json({
+            error: 'Failed to create feedback',
+            details: err.message
+        });
+    } finally {
+        connection.release();
+    }
 }
 
 exports.editFeedback = async (req, res) => {
@@ -241,8 +241,8 @@ exports.deleteLesson = async (req, res) => { // delete the date and then
     try {
         await connection.beginTransaction();
 
-    const getClassSql = `SELECT day, period, time FROM classes WHERE classid = ?`;
-    const [classResult] = await connection.query(getClassSql);
+        const getClassSql = `SELECT day, period, time FROM classes WHERE classid = ?`;
+        const [classResult] = await connection.query(getClassSql);
         if (classResult.length === 0) {
             return res.status(500).send({ message: 'Class not found' });
         }
@@ -254,61 +254,61 @@ exports.deleteLesson = async (req, res) => { // delete the date and then
         const deleteLessonSql = `DELETE FROM dates WHERE classid = ? AND date = ?`;
         await connection.query(deleteLessonSql, [classId, dateToDelete]);
 
-            // find the next available date after the deleted date
-            const currentDate = new Date(dateToDelete);
-            let nextDate = new Date(currentDate);
-            let newLessonAdded = false;
-            let attempts = 0;
-            
-            while (!newLessonAdded && attempts < 30) {
-                nextDate.setDate(nextDate.getDate() + 1); // Move to the next day
-                if (daysOfWeek.includes(nextDate.getDay())) {
-                    const formattedDate = nextDate.toISOString().split('T')[0];
+        // find the next available date after the deleted date
+        const currentDate = new Date(dateToDelete);
+        let nextDate = new Date(currentDate);
+        let newLessonAdded = false;
+        let attempts = 0;
 
-                    // check if the new date already exists in the `dates` table
-                    const checkDateSql = `SELECT * FROM dates WHERE classid = ? AND date = ?`;
-                    const [checkResult] = await connection.query(checkDateSql, [classId, formattedDate]);
+        while (!newLessonAdded && attempts < 30) {
+            nextDate.setDate(nextDate.getDate() + 1); // Move to the next day
+            if (daysOfWeek.includes(nextDate.getDay())) {
+                const formattedDate = nextDate.toISOString().split('T')[0];
 
-                        if (checkResult.length === 0) {
-                            // insert new lesson 
-                            const insertNewDateSql = `INSERT INTO dates (classid, date, time, feedback_written, createdAt, updatedAt) VALUES (?, ?, ?, 0, NOW(), NOW())`;
-                            const [insertResult] = await connection.query(insertNewDateSql, [classId, formattedDate, time]);
+                // check if the new date already exists in the `dates` table
+                const checkDateSql = `SELECT * FROM dates WHERE classid = ? AND date = ?`;
+                const [checkResult] = await connection.query(checkDateSql, [classId, formattedDate]);
 
-                                const newDateId = insertResult.insertId;
-                                const insertFeedbackSql = `INSERT INTO feedback (dateid, workdone, attitude, homework, memo, rate, createdAt, updatedAt) VALUES (?, '', '', 0, '', 0, NOW(), NOW())`;
-                                await connection.query(insertFeedbackSql, [newDateId]);
+                if (checkResult.length === 0) {
+                    // insert new lesson 
+                    const insertNewDateSql = `INSERT INTO dates (classid, date, time, feedback_written, createdAt, updatedAt) VALUES (?, ?, ?, 0, NOW(), NOW())`;
+                    const [insertResult] = await connection.query(insertNewDateSql, [classId, formattedDate, time]);
 
-                                    newLessonAdded = true;
-                                    res.status(200).json({
-                                        message: 'deleted successfully',
-                                        newDate: formattedDate,
-                                    });
-                        }
+                    const newDateId = insertResult.insertId;
+                    const insertFeedbackSql = `INSERT INTO feedback (dateid, workdone, attitude, homework, memo, rate, createdAt, updatedAt) VALUES (?, '', '', 0, '', 0, NOW(), NOW())`;
+                    await connection.query(insertFeedbackSql, [newDateId]);
+
+                    newLessonAdded = true;
+                    res.status(200).json({
+                        message: 'deleted successfully',
+                        newDate: formattedDate,
+                    });
                 }
-                attempts++;
             }
-
-            if (!newLessonAdded && attempts >= 30) {
-                await connection.rollback();
-                return res.status(500).json({ message: 'Failed to generate a new lesson date within the limit' });
-            }
-
-            await connection.commit();
-
-        } catch (err) {
-            await connection.rollback();
-            console.error('Error in deleteLesson:', err);
-            res.status(500).json({ 
-                error: 'Failed to delete lesson',
-                details: err.message 
-            });
-        } finally {
-            connection.release();
+            attempts++;
         }
+
+        if (!newLessonAdded && attempts >= 30) {
+            await connection.rollback();
+            return res.status(500).json({ message: 'Failed to generate a new lesson date within the limit' });
+        }
+
+        await connection.commit();
+
+    } catch (err) {
+        await connection.rollback();
+        console.error('Error in deleteLesson:', err);
+        res.status(500).json({
+            error: 'Failed to delete lesson',
+            details: err.message
+        });
+    } finally {
+        connection.release();
+    }
 };
 
 exports.addNewLesson = async (req, res) => { // delete the last date and then create new date
-    const {classId, newDate} = req.body;
+    const { classId, newDate } = req.body;
 
     if (!classId || !newDate) {
         return res.status(400).json({ message: 'Invalid or missing classId or newDate field in request body.' });
@@ -319,8 +319,8 @@ exports.addNewLesson = async (req, res) => { // delete the last date and then cr
     try {
         await connection.beginTransaction();
 
-    const getLastDateSql = `SELECT date FROM dates WHERE classid = ? ORDER BY date ASC LIMIT 1`;
-    const [lastDateResult] = await connection.query(getLastDateSql, [classId]);
+        const getLastDateSql = `SELECT date FROM dates WHERE classid = ? ORDER BY date ASC LIMIT 1`;
+        const [lastDateResult] = await connection.query(getLastDateSql, [classId]);
         if (lastDateResult.length === 0) {
             return res.status(500).send({ message: 'No dates found to delete' });
         }
@@ -331,42 +331,42 @@ exports.addNewLesson = async (req, res) => { // delete the last date and then cr
         const deleteLastDateSql = `DELETE FROM dates WHERE classid = ? AND date = ?`;
         await connection.query(deleteLastDateSql, [classId, lastDateToDelete]);
 
-            console.log('Deleted last date:', lastDateToDelete);
+        console.log('Deleted last date:', lastDateToDelete);
 
-            // insert the new lesson date
-            const getClassSql = `SELECT time FROM classes WHERE classid = ?`;
-            const [classResult] = await connection.query(getClassSql, [classId]);
-                if (classResult.length === 0) {
-                    await connection.rollback();
-                    return res.status(500).send({ message: 'Class not found' });
-                }
+        // insert the new lesson date
+        const getClassSql = `SELECT time FROM classes WHERE classid = ?`;
+        const [classResult] = await connection.query(getClassSql, [classId]);
+        if (classResult.length === 0) {
+            await connection.rollback();
+            return res.status(500).send({ message: 'Class not found' });
+        }
 
-                const { time } = classResult[0];
+        const { time } = classResult[0];
 
-                const insertNewDateSql = `INSERT INTO dates (classid, date, time, feedback_written, createdAt, updatedAt)
+        const insertNewDateSql = `INSERT INTO dates (classid, date, time, feedback_written, createdAt, updatedAt)
                                           VALUES (?, ?, ?, 0, NOW(), NOW())`;
-                const [insertResult] = await connection.query(insertNewDateSql, [classId, newDate, time]);
+        const [insertResult] = await connection.query(insertNewDateSql, [classId, newDate, time]);
 
-                    const newDateId = insertResult.insertId;
+        const newDateId = insertResult.insertId;
 
-                    // insert a new feedback for the new date
-                    const insertFeedbackSql = `INSERT INTO feedback (dateid, workdone, attitude, homework, memo, rate, createdAt, updatedAt)
+        // insert a new feedback for the new date
+        const insertFeedbackSql = `INSERT INTO feedback (dateid, workdone, attitude, homework, memo, rate, createdAt, updatedAt)
                                                VALUES (?, '', '', 0, '', 0, NOW(), NOW())`;
-                    await connection.query(insertFeedbackSql, [newDateId]);
+        await connection.query(insertFeedbackSql, [newDateId]);
 
-                    await connection.commit();
-                        res.status(200).json({
-                            message: 'created successfully',
-                            deletedDate: lastDateToDelete,
-                        });
-                    } catch (err) {
-                        await connection.rollback();
-                        console.error('Error in addNewLesson:', err);
-                        res.status(500).json({ 
-                            error: 'Failed to update lesson dates',
-                            details: err.message 
-                        });
-                    } finally {
-                        connection.release();
-                    }
+        await connection.commit();
+        res.status(200).json({
+            message: 'created successfully',
+            deletedDate: lastDateToDelete,
+        });
+    } catch (err) {
+        await connection.rollback();
+        console.error('Error in addNewLesson:', err);
+        res.status(500).json({
+            error: 'Failed to update lesson dates',
+            details: err.message
+        });
+    } finally {
+        connection.release();
+    }
 };

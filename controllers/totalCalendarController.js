@@ -7,7 +7,7 @@ exports.getClassesid = async (req, res) => {
         const [results] = await db.query('SELECT C.classid FROM classes AS C, teachers AS T WHERE C.teacherid = T.teacherid', [teacherId]);
         res.json(results);
     }
-    catch (err){
+    catch (err) {
         console.error('Database query error:', err);
         res.status(500).send(err);
     }
@@ -38,8 +38,8 @@ exports.getAllClassTeacher = async (req, res) => {
             dates AS D ON D.classid = C.classid
         WHERE 
             C.teacherid = ?`;
-    
-    try{
+
+    try {
         const [results] = await db.query(sql, [teacherId]);
         res.json(results);
     }
@@ -73,12 +73,12 @@ exports.getAllClassStudent = async (req, res) => {
             dates AS D ON D.classid = C.classid
         WHERE 
             C.studentid = ?`;
-    
+
     try {
         const [results] = await db.query(sql, [studentId]);
         res.json(results);
     }
-    catch (err){
+    catch (err) {
         console.error('Database query error:', err);
         res.status(500).send(err);
     }
@@ -110,13 +110,13 @@ exports.getClassesByDateTeacher = async (req, res) => {
             DATE(D.date) = ? AND C.teacherid = ?;
         `;
 
-    try{
+    try {
         const [results] = await db.query(sql, [date, teacherId]);
         console.log("Query result:", results);
 
-        res.json(results); 
+        res.json(results);
     }
-    catch (err){
+    catch (err) {
         console.error('Database query error:', err);
         res.status(500).send(err);
     }
@@ -140,10 +140,10 @@ exports.getClassesByDateStudent = async (req, res) => {
         WHERE 
             DATE(D.date) = ? AND C.studentid = ?;`;
 
-    try{
+    try {
         const [results] = await db.query(sql, [date, studentId]);
         console.log("Query result:", results);
-        res.json(results); 
+        res.json(results);
     }
     catch (err) {
         console.error('Database query error:', err);
