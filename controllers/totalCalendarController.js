@@ -13,10 +13,13 @@ exports.getClassesid = async (req, res) => {
     }
 };
 
-// all class information for a teacher's total calendar
+// all class information for a teacher's total calendar in monthly
 exports.getAllClassTeacher = async (req, res) => {
     const teacherId = req.userId;
+    const { year, month } = req.query;
+
     console.log('Teacher ID from JWT:', teacherId);
+    console.log('Fetching data for Year:', year, 'Month:', month);
 
     // 학생이름, 요일, 정산방법, 수업횟수, 다음정산일, 수업코드, 제목, 진행수업횟수, 테마색상
     const sql = `
@@ -37,10 +40,14 @@ exports.getAllClassTeacher = async (req, res) => {
         JOIN 
             dates AS D ON D.classid = C.classid
         WHERE 
-            C.teacherid = ?`;
+            C.teacherid = ? AND 
+            YEAR(D.date) = ? AND 
+            MONTH(D.date) = ? 
+        ORDER BY 
+            D.date ASC`;
 
     try {
-        const [results] = await db.query(sql, [teacherId]);
+        const [results] = await db.query(sql, [teacherId, year, month]);
         res.json(results);
     }
     catch (err) {
@@ -52,6 +59,7 @@ exports.getAllClassTeacher = async (req, res) => {
 // all class information for a student's total calendar
 exports.getAllClassStudent = async (req, res) => {
     const studentId = req.userId;
+    const { year, month } = req.query;
 
     // 학생이름, 요일, 정산방법, 수업횟수, 다음정산일, 수업코드, 제목, 진행수업횟수, 테마색상
     const sql = `
@@ -72,10 +80,14 @@ exports.getAllClassStudent = async (req, res) => {
         JOIN 
             dates AS D ON D.classid = C.classid
         WHERE 
-            C.studentid = ?`;
+            C.studentid = ? AND 
+            YEAR(D.date) = ? AND 
+            MONTH(D.date) = ? 
+        ORDER BY 
+            D.date ASC`;
 
     try {
-        const [results] = await db.query(sql, [studentId]);
+        const [results] = await db.query(sql, [studentId, year, month]);
         res.json(results);
     }
     catch (err) {

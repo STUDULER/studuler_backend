@@ -2,7 +2,7 @@ const db = require('../config/db');
 
 // all class information for a teacher's total calendar
 exports.getEachCalendarTeacher = async (req, res) => {
-    const { classId } = req.body;
+    const { classId, year, month } = req.body;
     const teacherId = req.userId;
 
     const sql = `
@@ -14,15 +14,35 @@ exports.getEachCalendarTeacher = async (req, res) => {
             C.dateofpayment, 
             C.themecolor 
         FROM 
-            classes AS C
+            classes AS C 
         JOIN 
-            dates AS D ON D.classid = C.classid
+            dates AS D ON D.classid = C.classid 
         WHERE 
-            C.classid = ? AND C.teacherid = ?`;
+            C.classid = ? AND 
+            C.teacherid = ? AND 
+            YEAR(D.date) = ? AND 
+            MONTH(D.date) = ? 
+        ORDER BY 
+            D.date ASC`;
 
     try {
-        const [results] = await db.query(sql, [classId, teacherId]);
-        res.json(results);
+        const [results] = await db.query(sql, [classId, teacherId, year, month]);
+
+        if (results.length === 0) {
+            return res.status(404).json({ message: 'Class not found or no associated dates.' });
+        }
+
+        const period = results[0].period;
+        const dates = results.map(row => row.date);
+        const inProgressDates = dates.slice(-period); // get the last period dates
+
+        // add the inProgress field
+        const updatedResults = results.map(row => ({
+            ...row,
+            inProgress: inProgressDates.includes(row.date)
+        }));
+
+        res.json(updatedResults);
     }
     catch (err) {
         console.error('Error executing the query:', err);
@@ -32,7 +52,7 @@ exports.getEachCalendarTeacher = async (req, res) => {
 
 // all class information for a student's total calendar
 exports.getEachCalendarStudent = async (req, res) => {
-    const { classId } = req.body;
+    const { classId, year, month } = req.body;
     const studentId = req.userId;
 
     // 학생이름, 요일, 정산방법, 수업횟수, 다음정산일, 수업코드, 제목, 진행수업횟수, 테마색상
@@ -45,17 +65,38 @@ exports.getEachCalendarStudent = async (req, res) => {
             C.dateofpayment, 
             SCI.themecolor 
         FROM 
-            classes AS C
-        JOIN
-            student_classinfo AS SCI ON C.classid = SCI.classid
+            classes AS C 
         JOIN 
-            dates AS D ON D.classid = C.classid
+            student_classinfo AS SCI ON C.classid = SCI.classid 
+        JOIN 
+            dates AS D ON D.classid = C.classid 
         WHERE 
-            C.classid = ? AND C.studentid = ?`;
+            C.classid = ? AND 
+            C.studentid = ? AND 
+            YEAR(D.date) = ? AND 
+            MONTH(D.date) = ? 
+        ORDER BY 
+            D.date ASC`;
 
     try {
-        const [results] = await db.query(sql, [classId, studentId]);
-        res.json(results);
+        const [results] = await db.query(sql, [classId, studentId, year, month]);
+
+        if (results.length === 0) {
+            return res.status(404).json({ message: 'Class not found or no associated dates.' });
+        }
+
+        const period = results[0].period;
+        const dates = results.map(row => row.date);
+
+        const inProgressDates = dates.slice(-period); // get the last period dates
+
+        // add the inProgress field
+        const updatedResults = results.map(row => ({
+            ...row,
+            inProgress: inProgressDates.includes(row.date)
+        }));
+
+        res.json(updatedResults);
     }
     catch (err) {
         console.error('Error executing the query:', err);
@@ -229,7 +270,7 @@ exports.editFeedback = async (req, res) => {
     }
 }
 
-exports.deleteLesson = async (req, res) => { // delete the date and then 
+exports.deleteLesson = async (req, res) => { // delete the date and then create the next lesson automatically
     const { classId, dateToDelete } = req.body;
 
     if (!classId || !dateToDelete) {
@@ -241,18 +282,20 @@ exports.deleteLesson = async (req, res) => { // delete the date and then
     try {
         await connection.beginTransaction();
 
-        const getClassSql = `SELECT day, period, time FROM classes WHERE classid = ?`;
-        const [classResult] = await connection.query(getClassSql);
+        const getClassSql = `SELECT day, period, time, prepay, dateofpayment FROM classes WHERE classid = ?`;
+        const [classResult] = await connection.query(getClassSql, [classId]);
         if (classResult.length === 0) {
             return res.status(500).send({ message: 'Class not found' });
         }
-        const { day, period, time } = classResult[0];
+        const { day, period, time, prepay, dateofpayment } = classResult[0];
         const dayMapping = { "월": 1, "화": 2, "수": 3, "목": 4, "금": 5, "토": 6, "일": 0 };
         const daysOfWeek = day.split('/').map(d => dayMapping[d]).filter(d => d !== undefined);
 
         // delete the lesson
         const deleteLessonSql = `DELETE FROM dates WHERE classid = ? AND date = ?`;
         await connection.query(deleteLessonSql, [classId, dateToDelete]);
+
+        let updatedDateofPayment = null;
 
         // find the next available date after the deleted date
         const currentDate = new Date(dateToDelete);
@@ -279,10 +322,30 @@ exports.deleteLesson = async (req, res) => { // delete the date and then
                     await connection.query(insertFeedbackSql, [newDateId]);
 
                     newLessonAdded = true;
+
+                    if (!prepay) {
+                        updatedDateofPayment = formattedDate;
+                    }
+                    else if (prepay){
+                        if (dateToDelete === dateofpayment) {
+                            // If prepay is true, set dateofpayment to the first date of the last `period` dates
+                            const getDatesSql = `SELECT date FROM dates WHERE classid = ? ORDER BY date ASC`;
+                            const [datesResult] = await connection.query(getDatesSql, [classId]);
+                            const dates = datesResult.map(row => row.date);
+            
+                            if (dates.length >= period) {
+                                updatedDateofPayment = dates[dates.length - period];
+                            }
+                        }
+                    }
+
                     res.status(200).json({
                         message: 'deleted successfully',
                         newDate: formattedDate,
+                        newDateOfPayment: updatedDateofPayment || "unchanged",
                     });
+
+                    break;
                 }
             }
             attempts++;
@@ -291,6 +354,11 @@ exports.deleteLesson = async (req, res) => { // delete the date and then
         if (!newLessonAdded && attempts >= 30) {
             await connection.rollback();
             return res.status(500).json({ message: 'Failed to generate a new lesson date within the limit' });
+        }
+
+        if (updatedDateofPayment) {
+            const updateDateofPaymentSql = `UPDATE classes SET dateofpayment = ? WHERE classid = ?`;
+            await connection.query(updateDateofPaymentSql, [updatedDateofPayment, classId]);
         }
 
         await connection.commit();
@@ -319,7 +387,7 @@ exports.addNewLesson = async (req, res) => { // delete the last date and then cr
     try {
         await connection.beginTransaction();
 
-        const getLastDateSql = `SELECT date FROM dates WHERE classid = ? ORDER BY date ASC LIMIT 1`;
+        const getLastDateSql = `SELECT date FROM dates WHERE classid = ? ORDER BY date DESC LIMIT 1`;
         const [lastDateResult] = await connection.query(getLastDateSql, [classId]);
         if (lastDateResult.length === 0) {
             return res.status(500).send({ message: 'No dates found to delete' });
@@ -334,14 +402,14 @@ exports.addNewLesson = async (req, res) => { // delete the last date and then cr
         console.log('Deleted last date:', lastDateToDelete);
 
         // insert the new lesson date
-        const getClassSql = `SELECT time FROM classes WHERE classid = ?`;
+        const getClassSql = `SELECT time, prepay, dateofpayment FROM classes WHERE classid = ?`;
         const [classResult] = await connection.query(getClassSql, [classId]);
         if (classResult.length === 0) {
             await connection.rollback();
             return res.status(500).send({ message: 'Class not found' });
         }
 
-        const { time } = classResult[0];
+        const { time, prepay, dateofpayment } = classResult[0];
 
         const insertNewDateSql = `INSERT INTO dates (classid, date, time, feedback_written, createdAt, updatedAt)
                                           VALUES (?, ?, ?, 0, NOW(), NOW())`;
@@ -354,10 +422,27 @@ exports.addNewLesson = async (req, res) => { // delete the last date and then cr
                                                VALUES (?, '', '', 0, '', 0, NOW(), NOW())`;
         await connection.query(insertFeedbackSql, [newDateId]);
 
+        const getUpdatedLastDateSql = `SELECT date FROM dates WHERE classid = ? ORDER BY date DESC LIMIT 1`;
+        const [updatedLastDateResult] = await connection.query(getUpdatedLastDateSql, [classId]);
+        if (updatedLastDateResult.length === 0) {
+            await connection.rollback();
+            return res.status(500).send({ message: 'No dates found after inserting new date' });
+        }
+        const updatedLastDate = updatedLastDateResult[0].date;
+
+        let updatedDateofPayment = null;
+
+        if (!prepay){
+            const updateDateofPaymentSql = `UPDATE classes SET dateofpayment = ? WHERE classid = ?`;
+            await connection.query(updateDateofPaymentSql, [updatedLastDate, classId]);
+            updatedDateofPayment = updatedLastDate
+        }
+
         await connection.commit();
         res.status(200).json({
             message: 'created successfully',
             deletedDate: lastDateToDelete,
+            newDateOfPayment: updatedDateofPayment || "unchanged",
         });
     } catch (err) {
         await connection.rollback();
