@@ -223,7 +223,7 @@ exports.getEachClassTeacher = async (req, res) => {
 
 // each class information for student's home screen
 exports.getEachClassStudent = async (req, res) => {
-    const studentId = req.studentId;
+    const studentId = req.userId;
 
     // 선생이름, 요일, 정산방법, 수업횟수, 다음정산일, 수업코드, 제목, 진행수업횟수, 테마색상
     const sql = `
@@ -348,7 +348,7 @@ exports.updateEachClassStudent = async (req, res) => {
 // list of dates with unwritten feedback for teacher
 exports.getUnwrittenFeedbackDates = async (req, res) => {
     const { classId } = req.query;
-    const teacherId = req.teacherId; // Authenticated teacherId from JWT
+    const teacherId = req.userId; // Authenticated teacherId from JWT
 
     const sql = `
         SELECT 
@@ -360,7 +360,7 @@ exports.getUnwrittenFeedbackDates = async (req, res) => {
         LEFT JOIN 
             feedback AS F ON D.dateid = F.dateid
         WHERE 
-            D.classId = ? AND C.teacherid = ? 
+            D.classid = ? AND C.teacherid = ? 
             AND F.dateid IS NULL AND D.feedback_written = 0`;
 
     try {
