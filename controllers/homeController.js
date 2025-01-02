@@ -372,3 +372,51 @@ exports.getUnwrittenFeedbackDates = async (req, res) => {
         res.status(500).send(err);
     }
 };
+
+exports.removeClass = async (req, res) => {
+    const { classId } = req.query;
+    const teacherId = req.userId;
+
+    if (!classId) {
+        return res.status(400).json({ message: "classId is required" });
+    }
+
+    const connection = await db.getConnection();
+    try {
+        await connection.beginTransaction();
+
+        // verify if the classId belongs to the teacher
+        const verifyClassSql = `SELECT classid FROM classes WHERE classid = ? AND teacherid = ?`;
+        const [classCheckResult] = await connection.query(verifyClassSql, [classId, teacherId]);
+        if (classCheckResult.length === 0) {
+            await connection.rollback();
+            return res.status(404).json({ message: "Class not found or unauthorized access" });
+        }
+
+        // delete data in student_classinfo table
+        const deleteStudentClassInfoSql = `DELETE FROM student_classinfo WHERE classid = ?`;
+        await connection.query(deleteStudentClassInfoSql, [classId]);
+
+        // delete data in payment table
+        const deletePaymentSql = `DELETE FROM payment WHERE classid = ?`;
+        await connection.query(deletePaymentSql, [classId]);
+
+        // delete data in dates table
+        const deleteDatesSql = `DELETE FROM dates WHERE classid = ?`;
+        await connection.query(deleteDatesSql, [classId]);
+
+        // delete data in classes table
+        const deleteClassesSql = `DELETE FROM classes WHERE classid = ?`;
+        await connection.query(deleteClassesSql, [classId]);
+
+        await connection.commit();
+
+        res.status(200).json({ message: "Class removed successfully" });
+    } catch (err) {
+        await connection.rollback();
+        console.error("Error removing class:", err);
+        res.status(500).json({ message: "Failed to remove class", error: err.message });
+    } finally {
+        connection.release();
+    }
+};
