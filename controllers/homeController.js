@@ -413,7 +413,7 @@ exports.removeClass = async (req, res) => {
 
         await connection.commit();
 
-        res.status(200).json({ message: "Class removed successfully" });
+        res.json({ message: "Class removed successfully" });
     } catch (err) {
         await connection.rollback();
         console.error("Error removing class:", err);

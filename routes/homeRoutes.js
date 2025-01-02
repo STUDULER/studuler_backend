@@ -43,5 +43,8 @@ router.get('/noFeedback', authenticateJWT, upload.none(), (req, res) => {
     homeController.getUnwrittenFeedbackDates(req, res);
 });
 
+router.delete('/removeClass', authenticateJWT, (req, res) => {
+    homeController.removeClass(req, res);
+});
 
 module.exports = router;
