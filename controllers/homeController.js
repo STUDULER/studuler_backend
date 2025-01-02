@@ -296,7 +296,7 @@ exports.updateEachClassTeacher = async (req, res) => {
             AND C.classcode = ?`;
 
     try {
-        const [results] = await db.query(sql, [teacherId]);
+        const [results] = await db.query(sql, [studentname, classname, day, time, period, dateofpayment, hourlyrate, prepay, themecolor, teacherId, classcode]);
 
         if (results.affectedRows === 0) {
             return res.status(400).json({ message: 'No class found to update. Ensure you own the class and it exists.' });
@@ -331,7 +331,7 @@ exports.updateEachClassStudent = async (req, res) => {
             AND C.classcode = ?`;
 
     try {
-        const [results] = await db.query(sql, [studentId]);
+        const [results] = await db.query(sql, [teachername, classname, themecolor, studentId, classcode]);
 
         if (results.affectedRows === 0) {
             return res.status(400).json({ message: 'No class found to update. Ensure you own the class and it exists.' });
@@ -357,6 +357,8 @@ exports.getUnwrittenFeedbackDates = async (req, res) => {
             D.date
         FROM 
             dates AS D
+        INNER JOIN 
+            classes AS C ON D.classid = C.classid
         LEFT JOIN 
             feedback AS F ON D.dateid = F.dateid
         WHERE 
