@@ -317,10 +317,10 @@ exports.deleteLesson = async (req, res) => { // delete the date and then create 
                     const insertNewDateSql = `INSERT INTO dates (classid, date, time, feedback_written, createdAt, updatedAt) VALUES (?, ?, ?, 0, NOW(), NOW())`;
                     const [insertResult] = await connection.query(insertNewDateSql, [classId, formattedDate, time]);
 
-                    const newDateId = insertResult.insertId;
+                    /*const newDateId = insertResult.insertId;
                     const insertFeedbackSql = `INSERT INTO feedback (dateid, workdone, attitude, homework, memo, rate, createdAt, updatedAt) VALUES (?, '', '', 0, '', 0, NOW(), NOW())`;
                     await connection.query(insertFeedbackSql, [newDateId]);
-
+*/
                     newLessonAdded = true;
 
                     if (!prepay) {
@@ -338,13 +338,6 @@ exports.deleteLesson = async (req, res) => { // delete the date and then create 
                             }
                         }
                     }
-
-                    res.status(200).json({
-                        message: 'deleted successfully',
-                        newDate: formattedDate,
-                        newDateOfPayment: updatedDateofPayment || "unchanged",
-                    });
-
                     break;
                 }
             }
@@ -359,10 +352,17 @@ exports.deleteLesson = async (req, res) => { // delete the date and then create 
         if (updatedDateofPayment) {
             const updateDateofPaymentSql = `UPDATE classes SET dateofpayment = ? WHERE classid = ?`;
             await connection.query(updateDateofPaymentSql, [updatedDateofPayment, classId]);
+
+            const updatePaymentSql = `UPDATE payment SET date = ? WHERE classid = ? AND date = ?`;
+            await connection.query(updatePaymentSql, [updatedDateofPayment, classId, dateofpayment]);
         }
 
         await connection.commit();
-
+        res.status(200).json({
+            message: 'deleted successfully',
+            newDate: nextDate.toISOString().split('T')[0],
+            newDateOfPayment: updatedDateofPayment || "unchanged",
+        });
     } catch (err) {
         await connection.rollback();
         console.error('Error in deleteLesson:', err);
@@ -418,10 +418,10 @@ exports.addNewLesson = async (req, res) => { // delete the last date and then cr
         const newDateId = insertResult.insertId;
 
         // insert a new feedback for the new date
-        const insertFeedbackSql = `INSERT INTO feedback (dateid, workdone, attitude, homework, memo, rate, createdAt, updatedAt)
+        /*const insertFeedbackSql = `INSERT INTO feedback (dateid, workdone, attitude, homework, memo, rate, createdAt, updatedAt)
                                                VALUES (?, '', '', 0, '', 0, NOW(), NOW())`;
         await connection.query(insertFeedbackSql, [newDateId]);
-
+*/
         const getUpdatedLastDateSql = `SELECT date FROM dates WHERE classid = ? ORDER BY date DESC LIMIT 1`;
         const [updatedLastDateResult] = await connection.query(getUpdatedLastDateSql, [classId]);
         if (updatedLastDateResult.length === 0) {
@@ -436,6 +436,9 @@ exports.addNewLesson = async (req, res) => { // delete the last date and then cr
             const updateDateofPaymentSql = `UPDATE classes SET dateofpayment = ? WHERE classid = ?`;
             await connection.query(updateDateofPaymentSql, [updatedLastDate, classId]);
             updatedDateofPayment = updatedLastDate
+
+            const updatePaymentSql = `UPDATE payment SET date = ? WHERE classid = ? AND date = ?`;
+            await connection.query(updatePaymentSql, [updatedDateofPayment, classId, lastDateToDelete]);
         }
 
         await connection.commit();

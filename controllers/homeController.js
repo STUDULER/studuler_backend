@@ -85,8 +85,8 @@ exports.createClassTeacher = async (req, res) => {
             const paymentId = paymentResult.insertId;
 
             // update paymentid in the `classes` table
-            const sqlUpdateClassPaymentId = `UPDATE classes SET paymentid = ? WHERE classid = ?`;
-            await connection.query(sqlUpdateClassPaymentId, [paymentId, classId]);
+            const sqlUpdateClassPaymentId = `UPDATE classes SET dateofpayment = ?, paymentid = ? WHERE classid = ?`;
+            await connection.query(sqlUpdateClassPaymentId, [dateofpayment, paymentId, classId]);
 
             // insert generated dates into the `dates` table
             for (const dateObj of dates) {

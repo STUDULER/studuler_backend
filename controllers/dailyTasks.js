@@ -49,7 +49,7 @@ const generateNextDates = async (classId) => {
         const dateValues = nextDates.map(d => [d.classid, d.date, d.time, d.feedback_written, d.createdAt, d.updatedAt]);
         const [dateInsertResult] = await db.query(insertDatesSql, [dateValues]);
 
-        const fetchDateIdsSql = `
+        /*const fetchDateIdsSql = `
             SELECT dateid, date 
             FROM dates 
             WHERE classid = ? AND date > ? 
@@ -60,7 +60,7 @@ const generateNextDates = async (classId) => {
         const feedbackEntries = insertedDates.map(d => [d.dateid, new Date(), new Date()]);
         const insertFeedbackSql = `INSERT INTO feedback (dateid, createdAt, updatedAt) VALUES ?`;
         await db.query(insertFeedbackSql, [feedbackEntries]);
-
+*/
         const paymentDate = prepay
             ? nextDates[0].date // First date for prepay
             : nextDates[nextDates.length - 1].date; // Last date otherwise
