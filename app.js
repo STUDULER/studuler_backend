@@ -1,6 +1,4 @@
 const express = require('express');
-const https = require('https');
-const fs = require('fs');
 const app = express();
 const teacherRoutes = require('./routes/teacherRoutes');
 const studentRoutes = require('./routes/studentRoutes');
@@ -10,13 +8,6 @@ const eachRoutes = require('./routes/eachCalendarRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const authenticateJWT = require('./jwt/auth');
 const db = require('./config/db');
-
-// SSL certificate files
-const options = {
-    cert: fs.readFileSync('./certificate.crt'),
-    key: fs.readFileSync('./private.key'),
-};
-
 const PORT = 8443;
 
 app.use(express.json());
@@ -52,8 +43,7 @@ const startServer = async () => {
         console.log('Connected to database.');
         connection.release();
 
-        https.createServer(options, app).listen(PORT, () => {
-        //app.listen(PORT, () => {
+        app.listen(PORT, () => {
             console.log("Server is running on port", PORT);
         });
     } catch (err) {
