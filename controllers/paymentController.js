@@ -87,9 +87,9 @@ exports.getNextPayment = async (req, res) => {
         res.status(200).json({
             message: `Next payment retrieved successfully`,
             nextPayment: {
-                date: nextPayment.date,
-                cost: nextPayment.cost,
-                unpay: nextPayment.unpay
+                date: results[0].date,
+                cost: results[0].cost,
+                unpay: results[0].unpay
             }
         });
     }
