@@ -303,7 +303,7 @@ exports.deleteLesson = async (req, res) => { // delete the date and then create 
         let newLessonAdded = false;
         let attempts = 0;
 
-        while (!newLessonAdded && attempts < 30) {
+        while (!newLessonAdded) {
             nextDate.setDate(nextDate.getDate() + 1); // Move to the next day
             if (daysOfWeek.includes(nextDate.getDay())) {
                 const formattedDate = nextDate.toISOString().split('T')[0];
@@ -342,11 +342,6 @@ exports.deleteLesson = async (req, res) => { // delete the date and then create 
                 }
             }
             attempts++;
-        }
-
-        if (!newLessonAdded && attempts >= 30) {
-            await connection.rollback();
-            return res.status(500).json({ message: 'Failed to generate a new lesson date within the limit' });
         }
 
         if (updatedDateofPayment) {
@@ -457,4 +452,9 @@ exports.addNewLesson = async (req, res) => { // delete the last date and then cr
     } finally {
         connection.release();
     }
+};
+
+exports.getLastDateOfPrevious = async (req, res) => {
+    const { classId } = req.body;
+
 };
