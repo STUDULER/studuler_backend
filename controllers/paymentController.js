@@ -34,7 +34,7 @@ exports.getUnpaidDates = async (req, res) => {
             } else { // if no unpaid dates
                 // fetch the second most recent payment date
                 const secondMostRecentDateSql = `
-                    SELECT date
+                    SELECT date, cost
                     FROM payment
                     WHERE classid = ?
                     AND paymentid != ?
@@ -45,7 +45,7 @@ exports.getUnpaidDates = async (req, res) => {
 
                 if (secondMostRecentResult.length > 0) {
                     results[classid] = {
-                        dates: secondMostRecentResult[0].date,
+                        dates: { "date": secondMostRecentResult[0].date, "cost": secondMostRecentDateSql[0].cost},
                         unpaid: false
                     };
                 } else {
