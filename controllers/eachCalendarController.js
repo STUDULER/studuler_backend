@@ -483,4 +483,42 @@ exports.addNewLesson = async (req, res) => { // delete the last date and then cr
 exports.getLastDateOfPrevious = async (req, res) => {
     const { classId } = req.body;
 
+    const connection = await db.getConnection();
+    try {
+        await connection.beginTransaction();
+
+        const getPeriodSql = `SELECT period FROM classes WHERE classid = ?`;
+        const [periodResult] = await connection.query(getPeriodSql, [classId]);
+
+        if (periodResult.length === 0) {
+            await connection.rollback();
+            return res.status(404).json({ message: `No class found for class ID ${classId}` });
+        }
+        const period = periodResult[0].period;
+
+        const getDatesSql = `
+            SELECT date
+            FROM dates
+            WHERE classid = ?
+            ORDER BY date DESC
+        `;
+        const [datesResult] = await connection.query(getDatesSql, [classId]);
+
+        if (datesResult.length < period) {
+            await connection.rollback();
+            return res.status(404).json({ message: `Not enough dates to calculate the last date of the previous period for class ID ${classId}` });
+        }
+
+        const targetDateIndex = period;
+        const lastDateOfPrevious = datesResult[targetDateIndex] ? datesResult[targetDateIndex].date : null;
+
+        await connection.commit();
+        res.status(200).json({ lastDateOfPrevious });
+    } catch (err) {
+        await connection.rollback();
+        console.error('Error retrieving the last date of the previous period:', err);
+        res.status(500).json({ message: 'An error occurred while retrieving the last date', error: err.message });
+    } finally {
+        connection.release();
+    }
 };

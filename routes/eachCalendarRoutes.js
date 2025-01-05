@@ -33,4 +33,8 @@ router.post('/addLesson', authenticateJWT, upload.none(), (req, res) => {
     eachCalendarController.addNewLesson(req, res);
 });
 
+router.get('/prevLastDate', authenticateJWT, upload.none(), (req, res) => {
+    eachCalendarController.getLastDateOfPrevious(req, res);
+});
+
 module.exports = router;
