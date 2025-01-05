@@ -203,6 +203,7 @@ exports.getEachClassTeacher = async (req, res) => {
         SELECT 
             S.name, 
             C.classid, 
+            C.studentname,
             C.classcode, 
             C.classname,
             C.day, 
@@ -296,7 +297,7 @@ exports.getEachClassStudent = async (req, res) => {
 
 // modify class info by teacher
 exports.updateEachClassTeacher = async (req, res) => {
-    const { classcode, studentname, classname, day, time, period, dateofpayment, hourlyrate, prepay, themecolor } = req.body;
+    const { classId, studentname, classname, day, time, period, hourlyrate, prepay, themecolor } = req.body;
     const teacherId = req.userId;
 
     console.log('Teacher ID:', req.userId);
@@ -310,17 +311,16 @@ exports.updateEachClassTeacher = async (req, res) => {
             C.day = ?, 
             C.time = ?, 
             C.period = ?, 
-            C.dateofpayment = ?, 
             C.hourlyrate = ?, 
             C.prepay = ?, 
             C.themecolor = ?,
             C.updatedAt = NOW()
         WHERE 
             T.teacherid = ? 
-            AND C.classcode = ?`;
+            AND C.classid = ?`;
 
     try {
-        const [results] = await db.query(sql, [studentname, classname, day, time, period, dateofpayment, hourlyrate, prepay, themecolor, teacherId, classcode]);
+        const [results] = await db.query(sql, [studentname, classname, day, time, period, hourlyrate, prepay, themecolor, teacherId, classId]);
 
         if (results.affectedRows === 0) {
             return res.status(400).json({ message: 'No class found to update. Ensure you own the class and it exists.' });
@@ -399,7 +399,7 @@ exports.getUnwrittenFeedbackDates = async (req, res) => {
     }
 };
 
-exports.removeClass = async (req, res, classId) => {
+exports.removeClass = async (req, res) => {
     const { classId } = req.body;
     const teacherId = req.userId;
 
