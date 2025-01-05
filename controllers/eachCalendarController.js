@@ -327,8 +327,13 @@ exports.deleteLesson = async (req, res) => { // delete the date and then create 
                         updatedDateofPayment = formattedDate;
                     }
                     else if (prepay) {
-                        if (dateToDelete === dateofpayment) {
-                            console.log("date to delete = date of payment")
+                        const formattedDateToDelete = new Date(dateToDelete).toISOString().split('T')[0];
+                        const formattedDateOfPayment = new Date(dateofpayment).toISOString().split('T')[0];
+
+                        if (formattedDateToDelete === formattedDateOfPayment) {
+                            console.log("dateToDelete matches dateofpayment");
+                            console.log("dateToDelete:", dateToDelete);
+                            console.log("dateofpayment:", dateofpayment);
                             // If prepay is true, set dateofpayment to the first date of the last `period` dates
                             const findNextDateSql = `
                                 SELECT date 
