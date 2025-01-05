@@ -45,7 +45,7 @@ exports.getUnpaidDates = async (req, res) => {
 
                 if (secondMostRecentResult.length > 0) {
                     results[classid] = {
-                        dates: { "date": secondMostRecentResult[0].date, "cost": secondMostRecentDateSql[0].cost},
+                        dates: { "date": secondMostRecentResult[0].date, "cost": secondMostRecentResult[0].cost},
                         unpaid: false
                     };
                 } else {
