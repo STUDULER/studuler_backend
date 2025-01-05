@@ -326,15 +326,20 @@ exports.deleteLesson = async (req, res) => { // delete the date and then create 
                     if (!prepay) {
                         updatedDateofPayment = formattedDate;
                     }
-                    else if (prepay){
+                    else if (prepay) {
                         if (dateToDelete === dateofpayment) {
                             // If prepay is true, set dateofpayment to the first date of the last `period` dates
-                            const getDatesSql = `SELECT date FROM dates WHERE classid = ? ORDER BY date DESC LIMIT ?`;
-                            const [datesResult] = await connection.query(getDatesSql, [classId, period]);
-                            const dates = datesResult.map(row => row.date);
-            
-                            if (dates.length >= period) {
-                                updatedDateofPayment = dates[dates.length - 1];
+                            const findNextDateSql = `
+                                SELECT date 
+                                FROM dates 
+                                WHERE classid = ? AND date > ? 
+                                ORDER BY date ASC 
+                                LIMIT 1;
+                            `;
+
+                            const [nextDateResult] = await connection.query(findNextDateSql, [classId, dateToDelete]);
+                            if (nextDateResult.length > 0) {
+                                updatedDateofPayment = nextDateResult[0].date; // Retrieve the next date
                             }
                         }
                     }
@@ -427,7 +432,7 @@ exports.addNewLesson = async (req, res) => { // delete the last date and then cr
 
         let updatedDateofPayment = null;
 
-        if (!prepay){
+        if (!prepay) {
             const updateDateofPaymentSql = `UPDATE classes SET dateofpayment = ? WHERE classid = ?`;
             await connection.query(updateDateofPaymentSql, [updatedLastDate, classId]);
             updatedDateofPayment = updatedLastDate
