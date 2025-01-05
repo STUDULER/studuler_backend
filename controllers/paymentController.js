@@ -39,7 +39,7 @@ exports.getUnpaidDates = async (req, res) => {
                     WHERE classid = ?
                     AND paymentid != ?
                     ORDER BY date DESC
-                    LIMIT 1 OFFSET 1
+                    LIMIT 1
                 `;
                 const [secondMostRecentResult] = await connection.query(secondMostRecentDateSql, [classid, excludedPaymentId]);
 
