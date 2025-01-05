@@ -7,7 +7,7 @@ exports.getUnpaidDates = async (req, res) => {
     try {
         await connection.beginTransaction();
 
-        const getClassIdsSql = `SELECT classid FROM classes WHERE teacherid = ?`;
+        const getClassIdsSql = `SELECT classid, paymentid FROM classes WHERE teacherid = ?`;
         const [classIdsResult] = await connection.query(getClassIdsSql, [teacherId]);
 
         if (classIdsResult.length === 0) {
@@ -15,35 +15,36 @@ exports.getUnpaidDates = async (req, res) => {
             return res.status(404).json({ message: `No classes found for teacher ID ${teacherId}` });
         }
 
-        const classIds = classIdsResult.map(row => row.classid);
+        const classIds = classIdsResult.map(row => ({ classid: row.classid, excludedPaymentId: row.paymentid }));
         const results = {};
 
-        for (const classId of classIds) {
+        for (const { classid, excludedPaymentId } of classIds) {
             // fetch unpaid dates for the class
             const unpaidPaymentsSql = `
                 SELECT date, cost
                 FROM payment
-                WHERE unpay = true AND classid = ?
+                WHERE unpay = true AND classid = ? AND paymentid != ?
                 ORDER BY date ASC
             `;
-            const [unpaidResults] = await connection.query(unpaidPaymentsSql, [classId]);
+            const [unpaidResults] = await connection.query(unpaidPaymentsSql, [classid, excludedPaymentId]);
 
             if (unpaidResults.length > 0) {
                 // group unpaid payments by classid
-                results[classId] = { dates: unpaidResults, unpaid: true };
+                results[classid] = { dates: unpaidResults, unpaid: true };
             } else { // if no unpaid dates
                 // fetch the second most recent payment date
                 const secondMostRecentDateSql = `
                     SELECT date
                     FROM payment
                     WHERE classid = ?
+                    AND paymentid != ?
                     ORDER BY date DESC
                     LIMIT 1 OFFSET 1
                 `;
-                const [secondMostRecentResult] = await connection.query(secondMostRecentDateSql, [classId]);
+                const [secondMostRecentResult] = await connection.query(secondMostRecentDateSql, [classid, excludedPaymentId]);
 
                 if (secondMostRecentResult.length > 0) {
-                    results[classId] = {
+                    results[classid] = {
                         dates: secondMostRecentResult[0].date,
                         unpaid: false
                     };
@@ -74,7 +75,7 @@ exports.getNextPayment = async (req, res) => {
         return res.status(400).json({ message: 'classId is required' });
     }
 
-    const sql = `SELECT p.date, p.cost FROM payment p JOIN classes c ON p.paymentid = c.paymentid WHERE c.classid = ?`;
+    const sql = `SELECT p.date, p.cost, p.unpay FROM payment p JOIN classes c ON p.paymentid = c.paymentid WHERE c.classid = ?`;
 
     try {
         const [results] = await db.query(sql, [classId]);
@@ -85,7 +86,11 @@ exports.getNextPayment = async (req, res) => {
 
         res.status(200).json({
             message: `Next payment retrieved successfully`,
-            nextPayment: results[0] // returns the date and cost of the next payment
+            nextPayment: {
+                date: nextPayment.date,
+                cost: nextPayment.cost,
+                unpay: nextPayment.unpay
+            }
         });
     }
     catch (err) {
