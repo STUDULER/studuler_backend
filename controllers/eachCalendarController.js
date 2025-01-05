@@ -448,6 +448,19 @@ exports.addNewLesson = async (req, res) => { // delete the last date and then cr
             const updatePaymentSql = `UPDATE payment SET date = ? WHERE classid = ? AND date = ?`;
             await connection.query(updatePaymentSql, [updatedDateofPayment, classId, lastDateToDelete]);
         }
+        else if (prepay) {
+            const formattedNewDate = new Date(newDate).toISOString().split('T')[0];
+            const formattedDateOfPayment = new Date(dateofpayment).toISOString().split('T')[0];
+
+            if (formattedNewDate < formattedDateOfPayment){
+                const updateDateofPaymentSql = `UPDATE classes SET dateofpayment = ? WHERE classid = ?`;
+                await connection.query(updateDateofPaymentSql, [newDate, classId]);
+                updatedDateofPayment = newDate
+
+                const updatePaymentSql = `UPDATE payment SET date = ? WHERE classid = ? AND date = ?`;
+                await connection.query(updatePaymentSql, [newDate, classId, dateofpayment]);
+            }
+        }
 
         await connection.commit();
         res.status(200).json({
