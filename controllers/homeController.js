@@ -296,8 +296,8 @@ exports.getEachClassStudent = async (req, res) => {
 };
 
 // modify class info by teacher
-exports.updateEachClassTeacher = async (req, res) => {
-    const { classId, studentname, classname, day, time, period, hourlyrate, prepay, themecolor } = req.body;
+exports.updateStudentNameTeacher = async (req, res) => {
+    const { classId, studentname } = req.body;
     const teacherId = req.userId;
 
     console.log('Teacher ID:', req.userId);
@@ -307,12 +307,229 @@ exports.updateEachClassTeacher = async (req, res) => {
         JOIN teachers AS T ON T.teacherid = C.teacherid
         SET 
             C.studentname = ?,
+            C.updatedAt = NOW()
+        WHERE 
+            T.teacherid = ? 
+            AND C.classid = ?`;
+
+    try {
+        const [results] = await db.query(sql, [studentname, teacherId, classId]);
+
+        if (results.affectedRows === 0) {
+            return res.status(400).json({ message: 'No class found to update. Ensure you own the class and it exists.' });
+        }
+
+        res.json({ message: 'Class information updated successfully.' });
+    }
+    catch (err) {
+        console.error('Error executing the query:', err);
+        res.status(500).send(err);
+    }
+};
+
+// modify class info by teacher
+exports.updateClassNameTeacher = async (req, res) => {
+    const { classId, classname } = req.body;
+    const teacherId = req.userId;
+
+    console.log('Teacher ID:', req.userId);
+
+    const sql = `
+        UPDATE classes AS C
+        JOIN teachers AS T ON T.teacherid = C.teacherid
+        SET 
             C.classname = ?, 
+            C.updatedAt = NOW()
+        WHERE 
+            T.teacherid = ? 
+            AND C.classid = ?`;
+
+    try {
+        const [results] = await db.query(sql, [classname, teacherId, classId]);
+
+        if (results.affectedRows === 0) {
+            return res.status(400).json({ message: 'No class found to update. Ensure you own the class and it exists.' });
+        }
+
+        res.json({ message: 'Class information updated successfully.' });
+    }
+    catch (err) {
+        console.error('Error executing the query:', err);
+        res.status(500).send(err);
+    }
+};
+
+// modify class info by teacher
+exports.updateDayTeacher = async (req, res) => {
+    const { classId, day } = req.body;
+    const teacherId = req.userId;
+
+    console.log('Teacher ID:', req.userId);
+
+    const sql = `
+        UPDATE classes AS C
+        JOIN teachers AS T ON T.teacherid = C.teacherid
+        SET 
             C.day = ?, 
+            C.updatedAt = NOW()
+        WHERE 
+            T.teacherid = ? 
+            AND C.classid = ?`;
+
+    try {
+        const [results] = await db.query(sql, [day, teacherId, classId]);
+
+        if (results.affectedRows === 0) {
+            return res.status(400).json({ message: 'No class found to update. Ensure you own the class and it exists.' });
+        }
+
+        res.json({ message: 'Class information updated successfully.' });
+    }
+    catch (err) {
+        console.error('Error executing the query:', err);
+        res.status(500).send(err);
+    }
+};
+
+// modify class info by teacher
+exports.updateTimeTeacher = async (req, res) => {
+    const { classId, time } = req.body;
+    const teacherId = req.userId;
+
+    console.log('Teacher ID:', req.userId);
+
+    const sql = `
+        UPDATE classes AS C
+        JOIN teachers AS T ON T.teacherid = C.teacherid
+        SET 
             C.time = ?, 
+            C.updatedAt = NOW()
+        WHERE 
+            T.teacherid = ? 
+            AND C.classid = ?`;
+
+    try {
+        const [results] = await db.query(sql, [time, teacherId, classId]);
+
+        if (results.affectedRows === 0) {
+            return res.status(400).json({ message: 'No class found to update. Ensure you own the class and it exists.' });
+        }
+
+        res.json({ message: 'Class information updated successfully.' });
+    }
+    catch (err) {
+        console.error('Error executing the query:', err);
+        res.status(500).send(err);
+    }
+};
+
+// modify class info by teacher
+exports.updatePeriodTeacher = async (req, res) => {
+    const { classId, period } = req.body;
+    const teacherId = req.userId;
+
+    console.log('Teacher ID:', req.userId);
+
+    const sql = `
+        UPDATE classes AS C
+        JOIN teachers AS T ON T.teacherid = C.teacherid
+        SET 
             C.period = ?, 
+            C.updatedAt = NOW()
+        WHERE 
+            T.teacherid = ? 
+            AND C.classid = ?`;
+
+    try {
+        const [results] = await db.query(sql, [period, teacherId, classId]);
+
+        if (results.affectedRows === 0) {
+            return res.status(400).json({ message: 'No class found to update. Ensure you own the class and it exists.' });
+        }
+
+        res.json({ message: 'Class information updated successfully.' });
+    }
+    catch (err) {
+        console.error('Error executing the query:', err);
+        res.status(500).send(err);
+    }
+};
+
+// modify class info by teacher
+exports.updateHourlyRateTeacher = async (req, res) => {
+    const { classId, hourlyrate } = req.body;
+    const teacherId = req.userId;
+
+    console.log('Teacher ID:', req.userId);
+
+    const sql = `
+        UPDATE classes AS C
+        JOIN teachers AS T ON T.teacherid = C.teacherid
+        SET 
             C.hourlyrate = ?, 
+            C.updatedAt = NOW()
+        WHERE 
+            T.teacherid = ? 
+            AND C.classid = ?`;
+
+    try {
+        const [results] = await db.query(sql, [hourlyrate, teacherId, classId]);
+
+        if (results.affectedRows === 0) {
+            return res.status(400).json({ message: 'No class found to update. Ensure you own the class and it exists.' });
+        }
+
+        res.json({ message: 'Class information updated successfully.' });
+    }
+    catch (err) {
+        console.error('Error executing the query:', err);
+        res.status(500).send(err);
+    }
+};
+
+// modify class info by teacher
+exports.updatePrepayTeacher = async (req, res) => {
+    const { classId, prepay } = req.body;
+    const teacherId = req.userId;
+
+    console.log('Teacher ID:', req.userId);
+
+    const sql = `
+        UPDATE classes AS C
+        JOIN teachers AS T ON T.teacherid = C.teacherid
+        SET 
             C.prepay = ?, 
+            C.updatedAt = NOW()
+        WHERE 
+            T.teacherid = ? 
+            AND C.classid = ?`;
+
+    try {
+        const [results] = await db.query(sql, [prepay, teacherId, classId]);
+
+        if (results.affectedRows === 0) {
+            return res.status(400).json({ message: 'No class found to update. Ensure you own the class and it exists.' });
+        }
+
+        res.json({ message: 'Class information updated successfully.' });
+    }
+    catch (err) {
+        console.error('Error executing the query:', err);
+        res.status(500).send(err);
+    }
+};
+
+// modify class info by teacher
+exports.updateThemeColorTeacher = async (req, res) => {
+    const { classId, themecolor } = req.body;
+    const teacherId = req.userId;
+
+    console.log('Teacher ID:', req.userId);
+
+    const sql = `
+        UPDATE classes AS C
+        JOIN teachers AS T ON T.teacherid = C.teacherid
+        SET 
             C.themecolor = ?,
             C.updatedAt = NOW()
         WHERE 
@@ -320,7 +537,7 @@ exports.updateEachClassTeacher = async (req, res) => {
             AND C.classid = ?`;
 
     try {
-        const [results] = await db.query(sql, [studentname, classname, day, time, period, hourlyrate, prepay, themecolor, teacherId, classId]);
+        const [results] = await db.query(sql, [themecolor, teacherId, classId]);
 
         if (results.affectedRows === 0) {
             return res.status(400).json({ message: 'No class found to update. Ensure you own the class and it exists.' });
@@ -335,8 +552,8 @@ exports.updateEachClassTeacher = async (req, res) => {
 };
 
 // modify class info by student
-exports.updateEachClassStudent = async (req, res) => {
-    const { classId, teachername, classname, themecolor } = req.body;
+exports.updateTeacherNameStudent = async (req, res) => {
+    const { classId, teachername } = req.body;
     const studentId = req.userId;
 
     console.log('student ID:', studentId);
@@ -347,15 +564,13 @@ exports.updateEachClassStudent = async (req, res) => {
         JOIN classes AS C ON C.classid = SCI.classid
         SET 
             SCI.teachername = ?,
-            SCI.classname = ?, 
-            SCI.themecolor = ?,
             SCI.updatedAt = NOW()
         WHERE 
             SCI.studentid = ? 
             AND C.classid = ?`;
 
     try {
-        const [results] = await db.query(sql, [teachername, classname, themecolor, studentId, classId]);
+        const [results] = await db.query(sql, [teachername, studentId, classId]);
 
         if (results.affectedRows === 0) {
             return res.status(400).json({ message: 'No class found to update. Ensure you own the class and it exists.' });
@@ -368,6 +583,73 @@ exports.updateEachClassStudent = async (req, res) => {
         res.status(500).send(err);
     }
 };
+
+// modify class info by student
+exports.updateClassNameStudent = async (req, res) => {
+    const { classId, classname } = req.body;
+    const studentId = req.userId;
+
+    console.log('student ID:', studentId);
+
+    const sql = `
+        UPDATE student_classinfo AS SCI
+        JOIN students AS S ON S.studentid = SCI.studentid
+        JOIN classes AS C ON C.classid = SCI.classid
+        SET 
+            SCI.classname = ?, 
+            SCI.updatedAt = NOW()
+        WHERE 
+            SCI.studentid = ? 
+            AND C.classid = ?`;
+
+    try {
+        const [results] = await db.query(sql, [classname, studentId, classId]);
+
+        if (results.affectedRows === 0) {
+            return res.status(400).json({ message: 'No class found to update. Ensure you own the class and it exists.' });
+        }
+
+        res.json({ message: 'Class information updated successfully.' });
+    }
+    catch (err) {
+        console.error('Error executing the query:', err);
+        res.status(500).send(err);
+    }
+};
+
+// modify class info by student
+exports.updateThemeColorStudent = async (req, res) => {
+    const { classId, themecolor } = req.body;
+    const studentId = req.userId;
+
+    console.log('student ID:', studentId);
+
+    const sql = `
+        UPDATE student_classinfo AS SCI
+        JOIN students AS S ON S.studentid = SCI.studentid
+        JOIN classes AS C ON C.classid = SCI.classid
+        SET 
+            SCI.themecolor = ?,
+            SCI.updatedAt = NOW()
+        WHERE 
+            SCI.studentid = ? 
+            AND C.classid = ?`;
+
+    try {
+        const [results] = await db.query(sql, [themecolor, studentId, classId]);
+
+        if (results.affectedRows === 0) {
+            return res.status(400).json({ message: 'No class found to update. Ensure you own the class and it exists.' });
+        }
+
+        res.json({ message: 'Class information updated successfully.' });
+    }
+    catch (err) {
+        console.error('Error executing the query:', err);
+        res.status(500).send(err);
+    }
+};
+
 
 // list of dates with unwritten feedback for teacher
 exports.getUnwrittenFeedbackDates = async (req, res) => {

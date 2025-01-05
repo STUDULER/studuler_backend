@@ -36,14 +36,50 @@ router.put('/joinClass', authenticateJWT, upload.none(), (req, res) => { // shou
 });
 
 // modify class info by teacher
-router.put('/updateClassT', authenticateJWT, upload.none(), (req, res) => { // should delete upload.none()
+router.put('/updateStudentNameT', authenticateJWT, upload.none(), (req, res) => { // should delete upload.none()
     console.log('Received data:', req.body);
-    homeController.updateEachClassTeacher(req, res);
+    homeController.updateStudentNameTeacher(req, res);
+});
+router.put('/updateClassNameT', authenticateJWT, upload.none(), (req, res) => { // should delete upload.none()
+    console.log('Received data:', req.body);
+    homeController.updateClassNameTeacher(req, res);
+});
+router.put('/updateDayT', authenticateJWT, upload.none(), (req, res) => { // should delete upload.none()
+    console.log('Received data:', req.body);
+    homeController.updateDayTeacher(req, res);
+});
+router.put('/updateTimeT', authenticateJWT, upload.none(), (req, res) => { // should delete upload.none()
+    console.log('Received data:', req.body);
+    homeController.updateTimeTeacher(req, res);
+});
+router.put('/updatePeriodT', authenticateJWT, upload.none(), (req, res) => { // should delete upload.none()
+    console.log('Received data:', req.body);
+    homeController.updatePeriodTeacher(req, res);
+});
+router.put('/updateHourlyRateT', authenticateJWT, upload.none(), (req, res) => { // should delete upload.none()
+    console.log('Received data:', req.body);
+    homeController.updateHourlyRateTeacher(req, res);
+});
+router.put('/updatePrepayT', authenticateJWT, upload.none(), (req, res) => { // should delete upload.none()
+    console.log('Received data:', req.body);
+    homeController.updatePrepayTeacher(req, res);
+});
+router.put('/updateThemeColorT', authenticateJWT, upload.none(), (req, res) => { // should delete upload.none()
+    console.log('Received data:', req.body);
+    homeController.updateThemeColorTeacher(req, res);
 });
 // modify class info by student
-router.put('/updateClassS', authenticateJWT, upload.none(), (req, res) => { // should delete upload.none()
+router.put('/updateTeacherNameS', authenticateJWT, upload.none(), (req, res) => { // should delete upload.none()
     console.log('Received data:', req.body);
-    homeController.updateEachClassStudent(req, res);
+    homeController.updateTeacherNameStudent(req, res);
+});
+router.put('/updateClassNameS', authenticateJWT, upload.none(), (req, res) => { // should delete upload.none()
+    console.log('Received data:', req.body);
+    homeController.updateClassNameStudent(req, res);
+});
+router.put('/updateThemeColorS', authenticateJWT, upload.none(), (req, res) => { // should delete upload.none()
+    console.log('Received data:', req.body);
+    homeController.updateThemeColorStudent(req, res);
 });
 
 // get unwritten feedback dates
