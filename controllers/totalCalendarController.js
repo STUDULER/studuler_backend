@@ -59,7 +59,7 @@ exports.getAllClassTeacher = async (req, res) => {
 // all class information for a student's total calendar
 exports.getAllClassStudent = async (req, res) => {
     const studentId = req.userId;
-    const { year, month } = req.query;
+    const { year, month } = req.body;
 
     // 학생이름, 요일, 정산방법, 수업횟수, 다음정산일, 수업코드, 제목, 진행수업횟수, 테마색상
     const sql = `
