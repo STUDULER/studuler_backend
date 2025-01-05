@@ -673,6 +673,7 @@ exports.getUnwrittenFeedbackDates = async (req, res) => {
 
     try {
         const [results] = await db.query(sql, [classId, teacherId]);
+        console.log('unwritten feedback dates: ', results)
         res.json(results);
     }
     catch (err) {
