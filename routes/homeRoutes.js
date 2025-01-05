@@ -8,6 +8,14 @@ const authenticateJWT = require('../jwt/auth');
 // get all classes
 router.get('/', homeController.getClasses);
 
+// get classid, classname, and themecolor based on the userId
+router.get('/classIdT', authenticateJWT, (req, res) => {
+    homeController.getClassIdT(req, res);
+});
+router.get('/classIdS', authenticateJWT, (req, res) => {
+    homeController.getClassIdS(req, res);
+});
+
 // get classes information participated by the user
 router.get('/eachClassT', authenticateJWT, (req, res) => {
     homeController.getEachClassTeacher(req, res);

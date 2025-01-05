@@ -12,6 +12,30 @@ exports.getClasses = async (req, res) => {
     }
 };
 
+exports.getClassIdT = async (req, res) => {
+    const userId = req.userId;
+    try{
+        const [results] = await db.query('SELECT classid, classname, themecolor FROM classes WHERE teacherid = ?', [userId]);
+        res.json(results);
+    }
+    catch (err) {
+        console.error('Database query error:', err);
+        res.status(500).send(err);
+    }
+}
+
+exports.getClassIdS = async (req, res) => {
+    const userId = req.userId;
+    try{
+        const [results] = await db.query('SELECT classid, classname, themecolor FROM classes WHERE studentid = ?', [userId]);
+        res.json(results);
+    }
+    catch (err) {
+        console.error('Database query error:', err);
+        res.status(500).send(err);
+    }
+}
+
 // class created by teacher
 exports.createClassTeacher = async (req, res) => {
     const { classname, studentname, startdate, period, time, day, hourlyrate, prepay, themecolor } = req.body;
@@ -375,8 +399,8 @@ exports.getUnwrittenFeedbackDates = async (req, res) => {
     }
 };
 
-exports.removeClass = async (req, res) => {
-    const { classId } = req.query;
+exports.removeClass = async (req, res, classId) => {
+    const { classId } = req.body;
     const teacherId = req.userId;
 
     if (!classId) {
