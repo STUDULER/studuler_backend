@@ -16,7 +16,7 @@ exports.getClassesid = async (req, res) => {
 // all class information for a teacher's total calendar in monthly
 exports.getAllClassTeacher = async (req, res) => {
     const teacherId = req.userId;
-    const { year, month } = req.query;
+    const { year, month } = req.body;
 
     console.log('Teacher ID from JWT:', teacherId);
     console.log('Fetching data for Year:', year, 'Month:', month);

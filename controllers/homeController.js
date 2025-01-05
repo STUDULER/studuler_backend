@@ -336,7 +336,7 @@ exports.updateEachClassTeacher = async (req, res) => {
 
 // modify class info by student
 exports.updateEachClassStudent = async (req, res) => {
-    const { classcode, teachername, classname, themecolor } = req.body;
+    const { classId, teachername, classname, themecolor } = req.body;
     const studentId = req.userId;
 
     console.log('student ID:', studentId);
@@ -352,10 +352,10 @@ exports.updateEachClassStudent = async (req, res) => {
             SCI.updatedAt = NOW()
         WHERE 
             SCI.studentid = ? 
-            AND C.classcode = ?`;
+            AND C.classid = ?`;
 
     try {
-        const [results] = await db.query(sql, [teachername, classname, themecolor, studentId, classcode]);
+        const [results] = await db.query(sql, [teachername, classname, themecolor, studentId, classId]);
 
         if (results.affectedRows === 0) {
             return res.status(400).json({ message: 'No class found to update. Ensure you own the class and it exists.' });
