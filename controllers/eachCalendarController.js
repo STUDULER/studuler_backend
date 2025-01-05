@@ -329,12 +329,12 @@ exports.deleteLesson = async (req, res) => { // delete the date and then create 
                     else if (prepay){
                         if (dateToDelete === dateofpayment) {
                             // If prepay is true, set dateofpayment to the first date of the last `period` dates
-                            const getDatesSql = `SELECT date FROM dates WHERE classid = ? ORDER BY date ASC`;
-                            const [datesResult] = await connection.query(getDatesSql, [classId]);
+                            const getDatesSql = `SELECT date FROM dates WHERE classid = ? ORDER BY date DESC LIMIT ?`;
+                            const [datesResult] = await connection.query(getDatesSql, [classId, period]);
                             const dates = datesResult.map(row => row.date);
             
                             if (dates.length >= period) {
-                                updatedDateofPayment = dates[dates.length - period];
+                                updatedDateofPayment = dates[dates.length - 1];
                             }
                         }
                     }
