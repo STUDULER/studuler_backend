@@ -16,7 +16,7 @@ exports.getClassesid = async (req, res) => {
 // all class information for a teacher's total calendar in monthly
 exports.getAllClassTeacher = async (req, res) => {
     const teacherId = req.userId;
-    const { year, month } = req.body;
+    const { year, month } = req.query;
 
     console.log('Teacher ID from JWT:', teacherId);
     console.log('Fetching data for Year:', year, 'Month:', month);
@@ -59,7 +59,7 @@ exports.getAllClassTeacher = async (req, res) => {
 // all class information for a student's total calendar
 exports.getAllClassStudent = async (req, res) => {
     const studentId = req.userId;
-    const { year, month } = req.body;
+    const { year, month } = req.query;
 
     // 학생이름, 요일, 정산방법, 수업횟수, 다음정산일, 수업코드, 제목, 진행수업횟수, 테마색상
     const sql = `
@@ -98,7 +98,7 @@ exports.getAllClassStudent = async (req, res) => {
 
 // for each date clicked in teacher's total calendar
 exports.getClassesByDateTeacher = async (req, res) => {
-    const { date } = req.body;
+    const { date } = req.query;
     const teacherId = req.userId;
 
     console.log("Received date:", date);
@@ -137,7 +137,7 @@ exports.getClassesByDateTeacher = async (req, res) => {
 
 // for each date clicked in student's total calendar 
 exports.getClassesByDateStudent = async (req, res) => {
-    const { date } = req.body;
+    const { date } = req.query;
     const studentId = req.userId;
 
     const sql = `
