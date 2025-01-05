@@ -653,7 +653,7 @@ exports.updateThemeColorStudent = async (req, res) => {
 
 // list of dates with unwritten feedback for teacher
 exports.getUnwrittenFeedbackDates = async (req, res) => {
-    const { classId } = req.query;
+    const { classId, fromDate } = req.query;
     const teacherId = req.userId; // Authenticated teacherId from JWT
 
     const sql = `
@@ -669,11 +669,11 @@ exports.getUnwrittenFeedbackDates = async (req, res) => {
             feedback AS F ON D.dateid = F.dateid
         WHERE 
             D.classid = ? AND C.teacherid = ? 
-            AND F.dateid IS NULL AND D.feedback_written = 0`;
+            AND F.dateid IS NULL AND D.feedback_written = 0 
+            AND D.date <= ?`;
 
     try {
-        const [results] = await db.query(sql, [classId, teacherId]);
-        console.log('unwritten feedback dates: ', results)
+        const [results] = await db.query(sql, [classId, teacherId, fromDate]);
         res.json(results);
     }
     catch (err) {
