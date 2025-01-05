@@ -49,7 +49,7 @@ exports.getUnpaidDates = async (req, res) => {
                         unpaid: false
                     };
                 } else {
-                    results[classId] = {
+                    results[classid] = {
                         dates: null,
                         unpaid: false
                     };
