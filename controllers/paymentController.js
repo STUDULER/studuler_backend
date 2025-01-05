@@ -1,40 +1,67 @@
 const db = require('../config/db');
 
 exports.getUnpaidDates = async (req, res) => {
-    const { classId } = req.body;
-    if (!classId) {
-        return res.status(400).json({ message: 'classId is required' });
-    }
+    const teacherId = req.userId;
 
     const connection = await db.getConnection();
-
-    // next payment date is not classified as unpiad payment
-    const nextPaymentSql = `SELECT paymentid FROM classes WHERE classid = ?`;
     try {
-        const [nextPaymentResult] = await connection.query(nextPaymentSql, [classId]);
+        await connection.beginTransaction();
 
-        if (nextPaymentResult.length === 0) {
-            return res.status(404).json({ message: `No class found with class ID ${classId}` });
+        const getClassIdsSql = `SELECT classid FROM classes WHERE teacherid = ?`;
+        const [classIdsResult] = await connection.query(getClassIdsSql, [teacherId]);
+
+        if (classIdsResult.length === 0) {
+            await connection.rollback();
+            return res.status(404).json({ message: `No classes found for teacher ID ${teacherId}` });
         }
 
-        const nextPaymentId = nextPaymentResult[0].paymentid;
+        const classIds = classIdsResult.map(row => row.classid);
+        const results = {};
 
-        // query to retrieve unpaid payments without the next payment
-        const unpaidPaymentsSql = `SELECT date, cost FROM payment WHERE unpay = true AND classid = ? AND paymentid != ?`;
-        const [unpaidResults] = await connection.query(unpaidPaymentsSql, [classId, nextPaymentId]);
+        for (const classId of classIds) {
+            // fetch unpaid dates for the class
+            const unpaidPaymentsSql = `
+                SELECT date, cost
+                FROM payment
+                WHERE unpay = true AND classid = ?
+                ORDER BY date ASC
+            `;
+            const [unpaidResults] = await connection.query(unpaidPaymentsSql, [classId]);
 
-        if (unpaidResults.length === 0) {
-            return res.status(404).json({ message: `No unpaid payments found for class ID ${classId}` });
+            if (unpaidResults.length > 0) {
+                // group unpaid payments by classid
+                results[classId] = { dates: unpaidResults, unpaid: true };
+            } else { // if no unpaid dates
+                // fetch the second most recent payment date
+                const secondMostRecentDateSql = `
+                    SELECT date
+                    FROM payment
+                    WHERE classid = ?
+                    ORDER BY date DESC
+                    LIMIT 1 OFFSET 1
+                `;
+                const [secondMostRecentResult] = await connection.query(secondMostRecentDateSql, [classId]);
+
+                if (secondMostRecentResult.length > 0) {
+                    results[classId] = {
+                        dates: secondMostRecentResult[0].date,
+                        unpaid: false
+                    };
+                } else {
+                    results[classId] = {
+                        dates: null,
+                        unpaid: false
+                    };
+                }
+            }
         }
 
-        res.status(200).json({
-            message: `Unpaid payments retrieved successfully`,
-            unpaidPayments: unpaidResults // array of objects with date and cost
-        });
-    }
-    catch (err) {
-        console.error('Database query error:', err);
-        res.status(500).send(err);
+        await connection.commit();
+        res.status(200).json(results);
+    } catch (err) {
+        await connection.rollback();
+        console.error('Error retrieving unpaid dates:', err);
+        res.status(500).json({ message: 'An error occurred while retrieving unpaid dates', error: err.message });
     } finally {
         connection.release();
     }
