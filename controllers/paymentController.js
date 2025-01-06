@@ -166,3 +166,45 @@ exports.getNextPayment = async (req, res) => {
         res.status(500).send(err);
     }
 };
+
+exports.updateAsPaid = async (req, res) => {
+    const { classId, paidDate } = req.body;
+
+    const sql = `UPDATE payment SET unpay = 0 WHERE classid = ? AND date = ?`;
+
+    try {
+        const [results] = await db.query(sql, [classId, paidDate]);
+
+        if (results.length === 0) {
+            return res.status(404).json({ message: `No class ID ${classId} or date ${paidDate}` });
+        }
+
+        res.status(200).json({
+            message: `paid successfully!`
+        });
+    }
+    catch (err) {
+        console.error('Database query error:', err);
+        res.status(500).send(err);
+    }
+};
+
+exports.getPaymentInfo = async (req, res) => {
+    const { classId } = req.body;
+
+    const sql = `SELECT T.account, T.bank FROM classes AS C LEFT JOIN teachers AS T ON C.teacherid = T.teacherid WHERE C.classid = ?`;
+
+    try {
+        const [results] = await db.query(sql, [classId]);
+
+        if (results.length === 0) {
+            return res.status(404).json({ message: `No class ID ${classId}` });
+        }
+
+        res.status(200).json(results[0]);
+    }
+    catch (err) {
+        console.error('Database query error:', err);
+        res.status(500).send(err);
+    }
+};

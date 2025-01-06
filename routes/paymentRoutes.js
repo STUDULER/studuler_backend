@@ -11,8 +11,17 @@ router.get('/unpaidS', authenticateJWT, (req, res) => {
 router.get('/unpaidT', authenticateJWT, (req, res) => {
     paymentController.getUnpaidDatesStudent(req, res)
 });
+
 router.get('/nextpayment', authenticateJWT, (req, res) => {
     paymentController.getNextPayment(req, res)
+});
+
+router.put('/updateAsPaid', authenticateJWT, (req, res) => {
+    paymentController.updateAsPaid(req, res);
+});
+
+router.get('/paymentInfo', authenticateJWT, (req, res) => {
+    paymentController.getPaymentInfo(req, res)
 });
 
 module.exports = router;
