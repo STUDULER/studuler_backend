@@ -5,8 +5,11 @@ const upload = multer({ storage: multer.memoryStorage() });
 const paymentController = require('../controllers/paymentController');
 const authenticateJWT = require('../jwt/auth');
 
-router.get('/unpaid', authenticateJWT, (req, res) => {
-    paymentController.getUnpaidDates(req, res)
+router.get('/unpaidS', authenticateJWT, (req, res) => {
+    paymentController.getUnpaidDatesTeacher(req, res)
+});
+router.get('/unpaidT', authenticateJWT, (req, res) => {
+    paymentController.getUnpaidDatesStudent(req, res)
 });
 router.get('/nextpayment', authenticateJWT, (req, res) => {
     paymentController.getNextPayment(req, res)
