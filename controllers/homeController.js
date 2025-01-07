@@ -169,7 +169,7 @@ exports.joinClass = async (req, res) => {
         // insert new tuple in student_classinfo
         const insertClassInfoSql = `
                 INSERT INTO student_classinfo (studentid, classid, classname, teachername, themecolor, createdAt, updatedAt)
-                SELECT ?, c.classid, c.classname, t.name AS teachername, c.themecolor, NOW(), NOW()
+                SELECT ?, c.classid, c.classname, t.username AS teachername, c.themecolor, NOW(), NOW()
                 FROM classes c
                 JOIN teachers t ON c.teacherid = t.teacherid
                 WHERE c.classcode = ?
