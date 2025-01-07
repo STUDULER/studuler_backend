@@ -301,6 +301,11 @@ exports.updateStudentNameTeacher = async (req, res) => {
     console.log('classid, studentname: ', classId, studentname);
     console.log('Teacher ID:', req.userId);
 
+    // Check if classId is an integer
+    if (!Number.isInteger(classId)) {
+        return res.status(400).json({ message: 'Invalid classId. It must be an integer.' });
+    }
+    
     const sql = `
         UPDATE classes 
         SET 
