@@ -298,6 +298,7 @@ exports.updateStudentNameTeacher = async (req, res) => {
     const { classId, studentname } = req.query;
     const teacherId = req.userId;
 
+    console.log('studentname: ', studentname);
     console.log('Teacher ID:', req.userId);
 
     const sql = `
