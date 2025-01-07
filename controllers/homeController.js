@@ -297,7 +297,7 @@ exports.getEachClassStudent = async (req, res) => {
 
 // modify class info by teacher
 exports.updateStudentNameTeacher = async (req, res) => {
-    const { classId, studentname } = req.body;
+    const { classId, studentname } = req.query;
     const teacherId = req.userId;
 
     console.log('Teacher ID:', req.userId);
