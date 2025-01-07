@@ -192,7 +192,7 @@ exports.updateAsPaid = async (req, res) => {
 exports.getPaymentInfo = async (req, res) => {
     const { classId } = req.body;
 
-    const sql = `SELECT T.account, T.bank FROM classes AS C LEFT JOIN teachers AS T ON C.teacherid = T.teacherid WHERE C.classid = ?`;
+    const sql = `SELECT T.account, T.bank, T.name FROM classes AS C LEFT JOIN teachers AS T ON C.teacherid = T.teacherid WHERE C.classid = ?`;
 
     try {
         const [results] = await db.query(sql, [classId]);
