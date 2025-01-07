@@ -143,7 +143,7 @@ exports.getClassesByDateStudent = async (req, res) => {
     const sql = `
         SELECT C.classid, C.classname, C.themecolor,
                CASE 
-                   WHEN D.feedback_written IS 1 THEN '피드백 완료'
+                   WHEN D.feedback_written = 1 THEN '피드백 완료'
                    ELSE '피드백 미완료'
                END AS feedbackStatus
         FROM classes AS C
