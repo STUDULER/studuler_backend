@@ -36,11 +36,11 @@ exports.signupStudent = async (req, res) => {
 
 // jwt token for authentication when logs in
 exports.loginStudent = async (req, res) => {
-    const { username, password } = req.body;
-    const sql = 'SELECT * FROM students WHERE username = ? AND password = ?';
+    const { mail, password } = req.body;
+    const sql = 'SELECT * FROM students WHERE mail = ? AND password = ?';
 
     try {
-        const [results] = await db.query(sql, [username, password]);
+        const [results] = await db.query(sql, [mail, password]);
         if (results.length === 0) return res.status(401).send('Invalid credentials');
 
         const student = results[0];
