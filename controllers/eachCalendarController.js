@@ -168,7 +168,7 @@ exports.getFeedbackByDateStudent = async (req, res) => {
                END AS feedbackDetails
         FROM classes AS C
         JOIN dates AS D ON C.classid = D.classid
-        LEFT JOIN feedback AS F ON F.dateid = D.dateid AND F.classid = C.classid
+        LEFT JOIN feedback AS F ON F.dateid = D.dateid 
         WHERE D.date = ? AND D.classid = ? AND C.teacherid = ?;`;
 
     try {
