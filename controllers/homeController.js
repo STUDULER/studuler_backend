@@ -295,17 +295,17 @@ exports.getEachClassStudent = async (req, res) => {
 
 // modify class info by teacher
 exports.updateStudentNameTeacher = async (req, res) => {
-    const { classId, studentname } = req.query;
+    const { classId, studentname } = req.body;
     const teacherId = req.userId;
 
-    console.log('studentname: ', studentname);
+    console.log('classid, studentname: ', classId, studentname);
     console.log('Teacher ID:', req.userId);
 
     const sql = `
-        UPDATE classes
+        UPDATE classes 
         SET 
-            studentname = ?,
-            updatedAt = NOW()
+            studentname = ?, 
+            updatedAt = NOW() 
         WHERE 
             classid = ? AND teacherid = ?`;
 
