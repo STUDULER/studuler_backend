@@ -302,17 +302,15 @@ exports.updateStudentNameTeacher = async (req, res) => {
     console.log('Teacher ID:', req.userId);
 
     const sql = `
-        UPDATE classes AS C
-        JOIN teachers AS T ON T.teacherid = C.teacherid
+        UPDATE classes
         SET 
-            C.studentname = ?,
-            C.updatedAt = NOW()
+            studentname = ?,
+            updatedAt = NOW()
         WHERE 
-            T.teacherid = ? 
-            AND C.classid = ?`;
+            classid = ? AND teacherid = ?`;
 
     try {
-        const [results] = await db.query(sql, [studentname, teacherId, classId]);
+        const [results] = await db.query(sql, [studentname, classId, teacherId]);
 
         if (results.affectedRows === 0) {
             return res.status(400).json({ message: 'No class found to update. Ensure you own the class and it exists.' });
