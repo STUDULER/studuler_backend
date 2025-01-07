@@ -161,7 +161,7 @@ exports.joinClass = async (req, res) => {
         const [updateResult] = await connection.query(updateClassSql, [userId, classcode]);
         if (updateResult.affectedRows === 0) {
             // No rows updated, rollback transaction
-            return db.rollback(() => {
+            return connection.rollback(() => {
                 res.status(400).json({ message: 'Could not join the class. Make sure the class exists and has no student yet.' });
             });
         }
