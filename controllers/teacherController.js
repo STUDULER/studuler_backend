@@ -1,15 +1,18 @@
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
+const axios = require('axios');
+const { generateTokens } = require('../jwt/auth');
 require('dotenv').config();
 
 const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 
 exports.getTeachers = async (req, res) => {
     try {
         const [results] = await db.query('SELECT * FROM teachers');
         res.json(results);
     }
-    catch (err){
+    catch (err) {
         console.error('Database query error:', err);
         res.status(500).send(err);
     }
@@ -17,17 +20,24 @@ exports.getTeachers = async (req, res) => {
 
 // when teacher signs up
 exports.signupTeacher = async (req, res) => {
-    const { username, password, account, bank, name, mail, loginMethod, imageNum } = req.body;
+    const { username, password, account, bank, name, mail, loginMethod, imageNum, kakaoId } = req.body;
     console.log('Received data:', req.body);
 
-    const sql = 'INSERT INTO teachers (username, password, account, bank, name, mail, loginMethod, imageNum, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())';
-    try{
-        const [result] =  await db.query(sql, [username, password, account, bank, name, mail, loginMethod, imageNum]);
+    const sql = 'INSERT INTO teachers (username, password, account, bank, name, mail, loginMethod, imageNum, kakaoId, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())';
+    try {
+        const [result] = await db.query(sql, [username, password, account, bank, name, mail, loginMethod, imageNum, kakaoId]);
 
-        const token = jwt.sign({ userId: result.insertId, role: 'teacher' }, JWT_SECRET, { expiresIn: '8h' });
-        res.status(201).json({ userId: result.insertId, role: 'teacher', username, password, account, bank, name, mail, loginMethod, imageNum, createdAt: new Date(), updatedAt: new Date(), token });
+        const { accessToken, refreshToken } = generateTokens(result.insertId, 'teacher');
+        // const token = jwt.sign({ userId: result.insertId, role: 'teacher' }, JWT_SECRET, { expiresIn: '8h' });
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            //secure: process.env.NODE_ENV === 'production', // use HTTPS in production
+            sameSite: 'Strict', // prevent CSRF
+            maxAge: 6 * 30 * 24 * 60 * 60 * 1000, // 6 months
+        });
+        res.status(201).json({ userId: result.insertId, role: 'teacher', username, password, account, bank, name, mail, loginMethod, imageNum, kakaoId, createdAt: new Date(), updatedAt: new Date(), accessToken });
     }
-    catch (err){
+    catch (err) {
         console.error('Database query error:', err);
         res.status(500).send(err);
     }
@@ -38,17 +48,69 @@ exports.loginTeacher = async (req, res) => {
     const { mail, password } = req.body;
     const sql = 'SELECT * FROM teachers WHERE mail = ? AND password = ?';
 
-    try{
+    try {
         const [results] = await db.query(sql, [mail, password]);
         if (results.length === 0) return res.status(401).send('Invalid credentials');
 
         const teacher = results[0];
-        const token = jwt.sign({ userId: teacher.teacherid, role: 'teacher' }, JWT_SECRET, { expiresIn: '8h' });
+        const { accessToken, refreshToken } = generateTokens(teacher.teacherid, 'teacher');
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            // secure: true, // ensure the cookie only sent over HTTPS
+            sameSite: 'Strict',
+            maxAge: 6 * 30 * 24 * 60 * 60 * 1000
+        });
+        //const token = jwt.sign({ userId: teacher.teacherid, role: 'teacher' }, JWT_SECRET, { expiresIn: '8h' });
 
-        res.json({ token });
+        res.json({ accessToken });
     }
-    catch (err){
+    catch (err) {
         console.error('Database query error:', err);
         return res.status(500).send(err);
     }
 };
+
+exports.loginTeacherWithKakao = async (req, res) => {
+    const { kakaoAccessToken } = req.body;
+
+    if (!kakaoAccessToken) {
+        return res.status(400).json({ message: 'Kakao access token is required' });
+    }
+
+    try {
+        const kakaoResponse = await axios.get('https://kapi.kakao.com/v2/user/me', {
+            headers: {
+                Authorization: `Bearer ${kakaoAccessToken}`,
+            },
+        });
+
+        const kakaoProfile = kakaoResponse.data;
+        const kakaoId = kakaoProfile.id;
+        const username = kakaoProfile.properties?.nickname || 'Unknown';
+        const mail = kakaoProfile.kakao_account?.email || null;
+
+        const sqlCheck = 'SELECT * FROM teachers WHERE kakaoId = ?';
+        const [existingTeacher] = await db.query(sqlCheck, [kakaoId]);
+
+        if (existingTeacher.length > 0) {
+            const teacher = existingTeacher[0];
+            const { accessToken, refreshToken } = generateTokens(teacher.teacherid, 'teacher');
+            res.cookie('refreshToken', refreshToken,
+                {
+                    httpOnly: true,
+                    //secure: process.env.NODE_ENV === 'production', // use HTTPS in production
+                    sameSite: 'Strict', // prevent CSRF
+                    maxAge: 6 * 30 * 24 * 60 * 60 * 1000, // 6 months
+                });
+            return res.json({ accessToken });
+        } else {
+            return res.status(404).json({ isExist: false, kakaoId: kakaoId, username: username, mail: mail }); // if false, it needs sign up
+        }
+    } catch (err) {
+        console.error('Kakao login error:', err);
+        if (err.response && err.response.status === 401) {
+            return res.status(401).json({ message: 'Invalid Kakao access token' });
+        }
+        return res.status(500).json({ message: 'Failed to log in with Kakao', error: err.message });
+    }
+}

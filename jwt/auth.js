@@ -2,25 +2,97 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
+
+const generateTokens = (userId, role) => {
+    const accessToken = jwt.sign({ userId, role }, JWT_SECRET, { expiresIn: '10m' });
+    const refreshToken = jwt.sign({ userId, role }, JWT_REFRESH_SECRET, { expiresIn: '6M' });
+
+    return { accessToken, refreshToken };
+};
 
 const authenticateJWT = (req, res, next) => { // verify the token
     const authHeader = req.headers.authorization;
-    const token = authHeader && authHeader.split(' ')[1];
+    const accessToken = authHeader && authHeader.split(' ')[1];
+    const refreshToken = req.cookies.refreshToken;
 
-    if (!token) return res.status(403).send('Token required');
+    if (!accessToken) {
+        return res.status(403).send('Access token required');
+    }
 
-    jwt.verify(token, JWT_SECRET, (err, decoded) => {
-        if (err) {
-            console.error('JWT verification error:', err.message);
-            return res.status(403).send('Invalid token');
+    jwt.verify(accessToken, JWT_SECRET, async (err, decoded) => {
+        if (err && err.name === 'TokenExpiredError') { // if access token is expired, attempt to refresh it
+            if (!refreshToken) {
+                return res.status(405).send('Refresh token required');
+            }
+
+            try {
+                const newAccessToken = await autoRefreshAccessToken(refreshToken);
+                res.setHeader('Authorization', `Bearer ${newAccessToken}`);
+                req.headers.authorization = `Bearer ${newAccessToken}`; // Update the request with the new token
+                req.userId = decoded.userId;
+                req.role = decoded.role;
+                next();
+            } catch (refreshErr) {
+                console.error('Error refreshing token:', refreshErr);
+                return res.status(403).send('Invalid or expired refresh token');
+            }
         }
-
-        // JSON data
-        req.userId = decoded.userId || null;  // attach teacherId to request
-        req.role = decoded.role || null; // role of the user
-
-        next();
+        else if (err) {
+            // for other errors, deny access
+            console.error('Access token verification error:', err.message);
+            return res.status(403).send('Invalid access token');
+        }
+        else { // token is valid
+            // JSON data
+            req.userId = decoded.userId || null;  // attach teacherId to request
+            req.role = decoded.role || null; // role of the user
+            next();
+        }
     });
 };
 
+const autoRefreshAccessToken = (refreshToken) => {
+    return new Promise((resolve, reject) => {
+        jwt.verify(refreshToken, JWT_REFRESH_SECRET, (err, decoded) => {
+            if (err) return reject('Invalid refresh token');
+
+            const newAccessToken = jwt.sign(
+                { userId: decoded.userId, role: decoded.role },
+                JWT_SECRET,
+                { expiresIn: '10m' } // new access token
+            );
+            resolve(newAccessToken);
+        });
+    });
+};
+
+const refreshAccessToken = (req, res) => {
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+        return res.status(405).send('Refresh token required');
+    }
+
+    jwt.verify(refreshToken, JWT_REFRESH_SECRET, (err, decoded) => {
+        if (err) {
+            console.error('Refresh token verification error:', err.message);
+            return res.status(403).send('Invalid refresh token');
+        }
+
+        const { userId, role } = decoded;
+        const newAccessToken = jwt.sign({ userId, role }, JWT_SECRET, { expiresIn: '10m' });
+
+        res.json({ accessToken: newAccessToken });
+    });
+};
+
+const logout = (req, res) => {
+    res.clearCookie('refreshToken');
+    res.send('Logged out successfully');
+};
+
 module.exports = authenticateJWT;
+module.exports = generateTokens;
+module.exports = refreshAccessToken;
+module.exports = logout;

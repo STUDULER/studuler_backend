@@ -7,6 +7,7 @@ const authenticateJWT = require('../jwt/auth');
 
 router.get('/', studentController.getStudents);
 router.post('/signup', upload.none(), studentController.signupStudent);
-router.post('/login', upload.none(), studentController.loginStudent);
+router.post('/loginWithMail', upload.none(), studentController.loginStudent);
+router.post('/loginWithKakao', upload.none(), studentController.loginStudentWithKakao);
 
 module.exports = router;

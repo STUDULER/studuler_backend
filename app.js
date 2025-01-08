@@ -6,7 +6,9 @@ const homeRoutes = require('./routes/homeRoutes');
 const totalRoutes = require('./routes/totalCalendarRoutes');
 const eachRoutes = require('./routes/eachCalendarRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
+const logout = require('./jwt/auth');
 const authenticateJWT = require('./jwt/auth');
+const refreshAccessToken = require('./jwt/auth');
 const db = require('./config/db');
 const PORT = 8443;
 
@@ -21,6 +23,9 @@ app.use("/home", homeRoutes);
 app.use("/total", totalRoutes);
 app.use("/each", eachRoutes);
 app.use("/payment", paymentRoutes);
+
+app.post('/logout', authenticateJWT, logout);
+app.post('/refreshAccessToken', refreshAccessToken);
 
 app.get('/', (req, res) => {
     res.send('Welcome to STUDULER');
