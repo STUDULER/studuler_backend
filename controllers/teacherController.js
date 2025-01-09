@@ -1,6 +1,8 @@
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
 const axios = require('axios');
+const { OAuth2Client } = require('google-auth-library');
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const { generateTokens } = require('../jwt/auth');
 require('dotenv').config();
 
@@ -20,22 +22,28 @@ exports.getTeachers = async (req, res) => {
 
 // when teacher signs up
 exports.signupTeacher = async (req, res) => {
-    const { username, password, account, bank, name, mail, loginMethod, imageNum, kakaoId } = req.body;
+    const { username, password, account, bank, name, mail, loginMethod, imageNum, kakaoId, googleId } = req.body;
     console.log('Received data:', req.body);
 
-    const sql = 'INSERT INTO teachers (username, password, account, bank, name, mail, loginMethod, imageNum, kakaoId, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())';
+    const checkSql = 'SELECT COUNT(*) AS count FROM teachers WHERE mail = ?';
+    const sql = 'INSERT INTO teachers (username, password, account, bank, name, mail, loginMethod, imageNum, kakaoId, googleId, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())';
     try {
-        const [result] = await db.query(sql, [username, password, account, bank, name, mail, loginMethod, imageNum, kakaoId]);
+        const [checkResult] = await db.query(checkSql, [mail]);
+        const mailExists = checkResult[0].count > 0;
+        if (mailExists) { // user already exists
+            return res.status(401).json({ message: '이미 존재하는 계정입니다.' });
+        }
+
+        const [result] = await db.query(sql, [username, password, account, bank, name, mail, loginMethod, imageNum, kakaoId, googleId]);
 
         const { accessToken, refreshToken } = generateTokens(result.insertId, 'teacher');
-        // const token = jwt.sign({ userId: result.insertId, role: 'teacher' }, JWT_SECRET, { expiresIn: '8h' });
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
             //secure: process.env.NODE_ENV === 'production', // use HTTPS in production
             sameSite: 'Strict', // prevent CSRF
             maxAge: 6 * 30 * 24 * 60 * 60 * 1000, // 6 months
         });
-        res.status(201).json({ userId: result.insertId, role: 'teacher', username, password, account, bank, name, mail, loginMethod, imageNum, kakaoId, createdAt: new Date(), updatedAt: new Date(), accessToken });
+        res.status(201).json({ userId: result.insertId, role: 'teacher', username, password, account, bank, name, mail, loginMethod, imageNum, createdAt: new Date(), updatedAt: new Date(), accessToken });
     }
     catch (err) {
         console.error('Database query error:', err);
@@ -50,7 +58,12 @@ exports.loginTeacher = async (req, res) => {
 
     try {
         const [results] = await db.query(sql, [mail, password]);
-        if (results.length === 0) return res.status(401).send('Invalid credentials');
+        if (results.length === 0) {
+            return res.status(401).json({
+                success: false,
+                message: '잘못된 메일 또는 비밀번호 입니다. 다시 입력해주세요.',
+            });
+        }
 
         const teacher = results[0];
         const { accessToken, refreshToken } = generateTokens(teacher.teacherid, 'teacher');
@@ -60,9 +73,8 @@ exports.loginTeacher = async (req, res) => {
             sameSite: 'Strict',
             maxAge: 6 * 30 * 24 * 60 * 60 * 1000
         });
-        //const token = jwt.sign({ userId: teacher.teacherid, role: 'teacher' }, JWT_SECRET, { expiresIn: '8h' });
 
-        res.json({ accessToken });
+        res.json({ success: true, accessToken });
     }
     catch (err) {
         console.error('Database query error:', err);
@@ -114,3 +126,56 @@ exports.loginTeacherWithKakao = async (req, res) => {
         return res.status(500).json({ message: 'Failed to log in with Kakao', error: err.message });
     }
 }
+
+exports.loginTeacherWithGoogle = async (req, res) => {
+    const { googleIdToken } = req.body;
+
+    if (!googleIdToken) {
+        return res.status(400).json({ message: 'Google access token is required' });
+    }
+
+    try {
+        // verify the Google access token and get user info
+        const ticket = await googleClient.verifyIdToken({
+            idToken: googleIdToken,
+            audience: process.env.GOOGLE_CLIENT_ID,
+        });
+
+        const googlePayload = ticket.getPayload();
+        const googleId = googlePayload.sub; // google user ID
+        const username = googlePayload.name || 'Unknown';
+        const mail = googlePayload.email || null;
+
+        const sqlCheck = 'SELECT * FROM teachers WHERE googleId = ?';
+        const [existingTeacher] = await db.query(sqlCheck, [googleId]);
+
+        if (existingTeacher.length > 0) {
+            const teacher = existingTeacher[0];
+            const { accessToken, refreshToken } = generateTokens(teacher.teacherid, 'teacher');
+
+            res.cookie('refreshToken', refreshToken, {
+                httpOnly: true,
+                //secure: process.env.NODE_ENV === 'production', // use HTTPS in production
+                sameSite: 'Strict',
+                maxAge: 6 * 30 * 24 * 60 * 60 * 1000, // 6 months
+            });
+
+            return res.json({ accessToken });
+        } else { // if user doesn't exist, it needs sign up
+            return res.status(404).json({
+                isExist: false,
+                googleId: googleId,
+                username: username,
+                mail: mail
+            });
+        }
+    } catch (err) {
+        console.error('Google login error:', err);
+
+        if (err.response && err.response.status === 401) {
+            return res.status(401).json({ message: 'Invalid Google access token' });
+        }
+
+        return res.status(500).json({ message: 'Failed to log in with Google', error: err.message });
+    }
+};

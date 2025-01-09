@@ -11,5 +11,6 @@ router.post('/signup', upload.none(), teacherController.signupTeacher); // for p
 //router.post('/signup', teacherController.signupTeacher); // for application-json format
 router.post('/loginWithMail', upload.none(), teacherController.loginTeacher);
 router.post('/loginWithKakao', upload.none(), teacherController.loginTeacherWithKakao);
+router.post('/loginWithGoogle', upload.none(), teacherController.loginTeacherWithGoogle);
 
 module.exports = router;
