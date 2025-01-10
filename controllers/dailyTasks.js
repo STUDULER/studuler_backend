@@ -1,5 +1,5 @@
 const db = require('../config/db');
-const cron = require('node-cron');
+const { CronJob } = require('cron');
 
 const generateNextDates = async (classId) => {
     try {
@@ -82,7 +82,27 @@ const generateNextDates = async (classId) => {
 };
 
 // Schedule to run daily at 11:59 PM
-cron.schedule('59 23 * * *', async () => {
+const job = new CronJob(
+    '20 55 * * *',
+    async () => {
+        console.log("Running daily check for generating lesson dates at 11:59 PM Seoul time...");
+
+        const sqlGetClasses = `SELECT classid FROM classes`;
+
+        try {
+            const [classes] = await db.query(sqlGetClasses);
+            for (const { classid } of classes) {
+                await generateNextDates(classid);
+            }
+        } catch (err) {
+            console.error("Error in scheduled task:", err);
+        }
+    },
+    null, // No onComplete function
+    true, // Start immediately
+    'Asia/Seoul' // Set timezone
+);
+/*cron.schedule('59 23 * * *', async () => {
     console.log("Running daily check for generating lesson dates at 11:59 PM...");
     const sqlGetClasses = `SELECT classid FROM classes`;
 
@@ -94,4 +114,4 @@ cron.schedule('59 23 * * *', async () => {
     } catch (err) {
         console.error("Error in scheduled task:", err);
     }
-});
+});*/
