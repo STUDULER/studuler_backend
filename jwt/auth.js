@@ -91,7 +91,7 @@ const refreshAccessToken = (req, res) => {
     jwt.verify(refreshToken, JWT_REFRESH_SECRET, (err, decoded) => {
         if (err) {
             console.error('Refresh token verification error:', err.message);
-            return res.status(403).send('Invalid refresh token');
+            return res.status(405).send('Invalid refresh token');
         }
 
         const { userId, role } = decoded;
