@@ -50,7 +50,7 @@ exports.signupStudent = async (req, res) => {
 
 // jwt token for authentication when logs in
 exports.loginStudent = async (req, res) => {
-    const { mail, password } = req.body;
+    const { mail, password, studentFCM } = req.body;
     const sql = 'SELECT * FROM students WHERE mail = ? AND password = ?';
 
     try {
@@ -64,6 +64,8 @@ exports.loginStudent = async (req, res) => {
 
         const student = results[0];
         const { accessToken, refreshToken } = generateTokens(student.studentid, 'student');
+        await updateStudentFCM(student.studentid, studentFCM);
+
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
             // secure: true, // ensure the cookie only sent over HTTPS
@@ -110,7 +112,7 @@ const signupWithGoogle = async (username, mail, loginMethod) => {
 };
 
 exports.loginStudentWithKakao = async (req, res) => {
-    const { kakaoAccessToken } = req.body;
+    const { kakaoAccessToken, studentFCM } = req.body;
 
     if (!kakaoAccessToken) {
         return res.status(400).json({ message: 'Kakao access token is required' });
@@ -134,6 +136,8 @@ exports.loginStudentWithKakao = async (req, res) => {
         if (existingStudent.length > 0) {
             const student = existingStudent[0];
             const { accessToken, refreshToken } = generateTokens(student.studentid, 'student');
+            await updateStudentFCM(student.studentid, studentFCM);
+
             res.cookie('refreshToken', refreshToken,
                 {
                     httpOnly: true,
@@ -164,7 +168,7 @@ exports.loginStudentWithKakao = async (req, res) => {
 };
 
 exports.loginStudentWithGoogle = async (req, res) => {
-    const { username, mail } = req.body;
+    const { username, mail, studentFCM } = req.body;
 
     /*if (!googleIdToken) {
         return res.status(400).json({ message: 'Google access token is required' });
@@ -189,6 +193,7 @@ exports.loginStudentWithGoogle = async (req, res) => {
         if (existingStudent.length > 0) {
             const student = existingStudent[0];
             const { accessToken, refreshToken } = generateTokens(student.studentid, 'student');
+            await updateStudentFCM(student.studentid, studentFCM);
 
             res.cookie('refreshToken', refreshToken, {
                 httpOnly: true,
@@ -218,6 +223,23 @@ exports.loginStudentWithGoogle = async (req, res) => {
         }
 
         return res.status(500).json({ message: 'Failed to log in with Google', error: err.message });
+    }
+};
+
+const updateStudentFCM = async (studentId, studentFCM) => {
+    const sql = `UPDATE classes SET studentFCM = ? WHERE studentid = ?`;
+
+    try {
+        const [result] = await db.query(sql, [studentFCM, studentId]);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: `No class found for student ID ${studentId}` });
+        }
+
+        res.status(200).json({ message: "Student's FCM updated successfully" });
+    } catch (err) {
+        console.error('Database query error:', err);
+        res.status(500).send({ message: "Error updating FCM" });
     }
 };
 

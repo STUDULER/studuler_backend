@@ -52,7 +52,7 @@ exports.signupTeacher = async (req, res) => {
 
 // jwt token for authentication when logs in
 exports.loginTeacher = async (req, res) => {
-    const { mail, password } = req.body;
+    const { mail, password, teacherFCM } = req.body;
     const sql = 'SELECT * FROM teachers WHERE mail = ? AND password = ?';
 
     try {
@@ -66,6 +66,8 @@ exports.loginTeacher = async (req, res) => {
 
         const teacher = results[0];
         const { accessToken, refreshToken } = generateTokens(teacher.teacherid, 'teacher');
+        await updateTeacherFCM(teacher.teacherid, teacherFCM);
+
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
             // secure: true, // ensure the cookie only sent over HTTPS
@@ -82,7 +84,7 @@ exports.loginTeacher = async (req, res) => {
 };
 
 exports.loginTeacherWithKakao = async (req, res) => {
-    const { kakaoAccessToken } = req.body;
+    const { kakaoAccessToken, teacherFCM } = req.body;
 
     if (!kakaoAccessToken) {
         return res.status(400).json({ message: 'Kakao access token is required' });
@@ -106,6 +108,8 @@ exports.loginTeacherWithKakao = async (req, res) => {
         if (existingTeacher.length > 0) {
             const teacher = existingTeacher[0];
             const { accessToken, refreshToken } = generateTokens(teacher.teacherid, 'teacher');
+            await updateTeacherFCM(teacher.teacherid, teacherFCM);
+
             res.cookie('refreshToken', refreshToken,
                 {
                     httpOnly: true,
@@ -127,30 +131,16 @@ exports.loginTeacherWithKakao = async (req, res) => {
 };
 
 exports.loginTeacherWithGoogle = async (req, res) => {
-    const { mail } = req.body;
-
-    /*if (!googleIdToken) {
-        return res.status(400).json({ message: 'Google access token is required' });
-    }*/
+    const { mail, teacherFCM } = req.body;
 
     try {
-        // verify the Google access token and get user info
-        /*const ticket = await googleClient.verifyIdToken({
-            idToken: googleIdToken,
-            audience: process.env.GOOGLE_CLIENT_ID,
-        });
-
-        const googlePayload = ticket.getPayload();
-        const googleId = googlePayload.sub; // google user ID
-        const username = googlePayload.name || 'Unknown';
-        const mail = googlePayload.email || null;
-        */
         const sqlCheck = 'SELECT * FROM teachers WHERE mail = ?';
         const [existingTeacher] = await db.query(sqlCheck, [mail]);
 
         if (existingTeacher.length > 0) {
             const teacher = existingTeacher[0];
             const { accessToken, refreshToken } = generateTokens(teacher.teacherid, 'teacher');
+            await updateTeacherFCM(teacher.teacherid, teacherFCM);
 
             res.cookie('refreshToken', refreshToken, {
                 httpOnly: true,
@@ -173,6 +163,23 @@ exports.loginTeacherWithGoogle = async (req, res) => {
         }
 
         return res.status(500).json({ message: 'Failed to log in with Google', error: err.message });
+    }
+};
+
+const updateTeacherFCM = async (teacherId, teacherFCM) => {
+    const sql = `UPDATE classes SET teacherFCM = ? WHERE teacherid = ?`;
+
+    try {
+        const [result] = await db.query(sql, [teacherFCM, teacherId]);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: `No class found for teacher ID ${teacherId}` });
+        }
+
+        res.status(200).json({ message: "Teacher's FCM updated successfully" });
+    } catch (err) {
+        console.error('Database query error:', err);
+        res.status(500).send({ message: "Error updating FCM" });
     }
 };
 
