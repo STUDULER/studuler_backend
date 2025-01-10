@@ -43,7 +43,7 @@ const authenticateJWT = (req, res, next) => { // verify the token
                 next();
             } catch (refreshErr) {
                 console.error('Error refreshing token:', refreshErr);
-                return res.status(403).send('Invalid or expired refresh token');
+                return res.status(405).send('Invalid or expired refresh token');
             }
         }
         else if (err) {
