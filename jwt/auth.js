@@ -14,10 +14,6 @@ const generateTokens = (userId, role) => {
 const authenticateJWT = (req, res, next) => { // verify the token
     const authHeader = req.headers.authorization;
     const accessToken = authHeader && authHeader.split(' ')[1];
-    const refreshToken = req.headers['authorization'];
-    if (!refreshToken) {
-        return res.status(405).json({ message: 'Refresh token required' });
-    }
 
     if (!accessToken) {
         return res.status(403).send('Access token required');
@@ -25,26 +21,7 @@ const authenticateJWT = (req, res, next) => { // verify the token
 
     jwt.verify(accessToken, JWT_SECRET, async (err, decoded) => {
         if (err && err.name === 'TokenExpiredError') { // if access token is expired, attempt to refresh it
-            if (!refreshToken) {
-                return res.status(405).send('Refresh token required');
-            }
-
-            try {
-                const {newAccessToken, newRefreshToken } = await autoRefreshAccessToken(refreshToken);
-                res.setHeader('Authorization', `Bearer ${newAccessToken}`);
-                res.cookie('refreshToken', newRefreshToken, {
-                    httpOnly: true,
-                    sameSite: 'Strict',
-                    maxAge: 6 * 30 * 24 * 60 * 60 * 1000, // 6 months
-                });
-                req.headers.authorization = `Bearer ${newAccessToken}`; // Update the request with the new token
-                req.userId = decoded.userId;
-                req.role = decoded.role;
-                next();
-            } catch (refreshErr) {
-                console.error('Error refreshing token:', refreshErr);
-                return res.status(405).send('Invalid or expired refresh token');
-            }
+            return res.status(403).send('Need refresh token');
         }
         else if (err) {
             // for other errors, deny access
@@ -81,24 +58,30 @@ const autoRefreshAccessToken = (refreshToken) => {
     });
 };
 
-const refreshAccessToken = (req, res) => {
+const refreshAccessToken = async (req, res) => {
     const refreshToken = req.cookies.refreshToken;
 
     if (!refreshToken) {
         return res.status(405).send('Refresh token required');
     }
 
-    jwt.verify(refreshToken, JWT_REFRESH_SECRET, (err, decoded) => {
-        if (err) {
-            console.error('Refresh token verification error:', err.message);
-            return res.status(405).send('Invalid refresh token');
-        }
+    try {
+        const { newAccessToken, newRefreshToken } = await autoRefreshAccessToken(refreshToken);
 
-        const { userId, role } = decoded;
-        const newAccessToken = jwt.sign({ userId, role }, JWT_SECRET, { expiresIn: '10m' });
+        // Send new access token and refresh token in response headers/cookies
+        res.setHeader('Authorization', `Bearer ${newAccessToken}`);
+        res.cookie('refreshToken', newRefreshToken, {
+            httpOnly: true,
+            sameSite: 'Strict',
+            maxAge: 6 * 30 * 24 * 60 * 60 * 1000,  // 6 months
+        });
 
-        res.json({ accessToken: newAccessToken });
-    });
+        // Respond with success
+        res.send({ success: true });
+    } catch (refreshErr) {
+        console.error('Error refreshing token:', refreshErr);
+        return res.status(403).send('Invalid or expired refresh token');
+    }
 };
 
 const logout = (req, res) => {
