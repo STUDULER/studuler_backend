@@ -1,5 +1,7 @@
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
+const axios = require('axios');
+const { generateTokens } = require('../jwt/auth');
 require('dotenv').config();
 
 const JWT_SECRET = process.env.JWT_SECRET;
