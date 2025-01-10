@@ -80,7 +80,7 @@ const refreshAccessToken = async (req, res) => {
         });
 
         // Respond with success
-        res.send.json({ success: true, extra: "no", access: newAccessToken, refresh: newRefreshToken });
+        res.send({ success: true, extra: "no", access: newAccessToken, refresh: newRefreshToken });
     } catch (refreshErr) {
         console.error('Error refreshing token:', refreshErr);
         return res.status(403).send('Invalid or expired refresh token');
