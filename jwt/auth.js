@@ -16,7 +16,7 @@ const authenticateJWT = (req, res, next) => { // verify the token
     const accessToken = authHeader && authHeader.split(' ')[1];
     const refreshToken = req.headers['authorization'];
     if (!refreshToken) {
-        return res.status(403).json({ message: 'Refresh token required' });
+        return res.status(405).json({ message: 'Refresh token required' });
     }
 
     if (!accessToken) {
