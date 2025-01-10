@@ -1,4 +1,3 @@
-const jwt = require('jsonwebtoken');
 const db = require('../config/db');
 const axios = require('axios');
 //const { OAuth2Client } = require('google-auth-library');
@@ -74,7 +73,7 @@ exports.loginTeacher = async (req, res) => {
             maxAge: 6 * 30 * 24 * 60 * 60 * 1000
         });
 
-        res.json({ success: true, accessToken });
+        res.json({ userId: teacher.teacherid, accessToken });
     }
     catch (err) {
         console.error('Database query error:', err);
@@ -114,7 +113,7 @@ exports.loginTeacherWithKakao = async (req, res) => {
                     sameSite: 'Strict', // prevent CSRF
                     maxAge: 6 * 30 * 24 * 60 * 60 * 1000, // 6 months
                 });
-            return res.json({ accessToken });
+            return res.json({ userId: teacher.teacherid, accessToken });
         } else {
             return res.status(404).json({ isExist: false, kakaoId: kakaoId, username: username, mail: mail }); // if false, it needs sign up
         }
@@ -125,7 +124,7 @@ exports.loginTeacherWithKakao = async (req, res) => {
         }
         return res.status(500).json({ message: 'Failed to log in with Kakao', error: err.message });
     }
-}
+};
 
 exports.loginTeacherWithGoogle = async (req, res) => {
     const { mail } = req.body;
@@ -160,7 +159,7 @@ exports.loginTeacherWithGoogle = async (req, res) => {
                 maxAge: 6 * 30 * 24 * 60 * 60 * 1000, // 6 months
             });
 
-            return res.json({ accessToken });
+            return res.json({ userId: teacher.teacherid, accessToken });
         } else { // if user doesn't exist, it needs sign up
             return res.status(404).json({
                 isExist: false
@@ -178,5 +177,19 @@ exports.loginTeacherWithGoogle = async (req, res) => {
 };
 
 exports.signoutTeacher = async (req, res) => {
-    
+    const teacherId = req.userId;
+
+    try {
+        // delete user in teachers table
+        const deleteSql = `DELETE FROM teachers WHERE teacherid = ?`;
+        await db.query(deleteSql, [teacherId]);
+        // delete on cascade for other related data in database
+
+        res.clearCookie('refreshToken', { httpOnly: true, sameSite: 'Strict' });
+        res.setHeader('Authorization', '');
+        res.status(200).json({ message: "User signed out successfully" });
+    } catch (error) {
+        console.error("Error signing out teacher:", error);
+        res.status(500).json({ message: "Internal Server Error", error: error.message });
+    }
 };

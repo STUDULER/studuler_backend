@@ -10,5 +10,6 @@ router.post('/signup', upload.none(), studentController.signupStudent);
 router.post('/loginWithMail', upload.none(), studentController.loginStudent);
 router.post('/loginWithKakao', upload.none(), studentController.loginStudentWithKakao);
 router.post('/loginWithGoogle', upload.none(), studentController.loginStudentWithGoogle);
+router.post('/signout', authenticateJWT, studentController.signoutStudent);
 
 module.exports = router;

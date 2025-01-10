@@ -1,4 +1,3 @@
-const jwt = require('jsonwebtoken');
 const db = require('../config/db');
 const axios = require('axios');
 const { generateTokens } = require('../jwt/auth');
@@ -72,7 +71,7 @@ exports.loginStudent = async (req, res) => {
             maxAge: 6 * 30 * 24 * 60 * 60 * 1000
         });
 
-        res.json({ success: true, accessToken });
+        res.json({ userId: student.studentid, accessToken });
     }
     catch (err) {
         console.error('Database query error:', err);
@@ -142,7 +141,7 @@ exports.loginStudentWithKakao = async (req, res) => {
                     sameSite: 'Strict', // prevent CSRF
                     maxAge: 6 * 30 * 24 * 60 * 60 * 1000, // 6 months
                 });
-            return res.json({ accessToken });
+            return res.json({ userId: student.studentId, accessToken });
         } else {
             const studentData = await signupWithKakao(username, mail, 2, kakaoId);
 
@@ -153,7 +152,7 @@ exports.loginStudentWithKakao = async (req, res) => {
                 maxAge: 6 * 30 * 24 * 60 * 60 * 1000, // 6 months
             });
 
-            return res.json({ accessToken: studentData.accessToken });
+            return res.json({ userId: studentData.userId, accessToken: studentData.accessToken });
         }
     } catch (err) {
         console.error('Kakao login error:', err);
@@ -198,7 +197,7 @@ exports.loginStudentWithGoogle = async (req, res) => {
                 maxAge: 6 * 30 * 24 * 60 * 60 * 1000, // 6 months
             });
 
-            return res.json({ accessToken });
+            return res.json({ userId: student.studentid, accessToken });
         } else { // if user doesn't exist, it needs sign up
             const studentData = await signupWithGoogle(username, mail, 3);
 
@@ -209,7 +208,7 @@ exports.loginStudentWithGoogle = async (req, res) => {
                 maxAge: 6 * 30 * 24 * 60 * 60 * 1000, // 6 months
             });
 
-            return res.json({ accessToken });
+            return res.json({ userId: studentData.userId, accessToken });
         }
     } catch (err) {
         console.error('Google login error:', err);
@@ -219,5 +218,23 @@ exports.loginStudentWithGoogle = async (req, res) => {
         }
 
         return res.status(500).json({ message: 'Failed to log in with Google', error: err.message });
+    }
+};
+
+exports.signoutStudent = async (req, res) => {
+    const studentId = req.userId;
+
+    try {
+        // delete user in teachers table
+        const deleteSql = `DELETE FROM students WHERE studentid = ?`;
+        await db.query(deleteSql, [studentId]);
+        // delete on cascade for other related data in database
+
+        res.clearCookie('refreshToken', { httpOnly: true, sameSite: 'Strict' });
+        res.setHeader('Authorization', '');
+        res.status(200).json({ message: "User signed out successfully" });
+    } catch (error) {
+        console.error("Error signing out student:", error);
+        res.status(500).json({ message: "Internal Server Error", error: error.message });
     }
 };
