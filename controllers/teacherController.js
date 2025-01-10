@@ -136,6 +136,8 @@ exports.loginTeacherWithKakao = async (req, res) => {
 exports.loginTeacherWithGoogle = async (req, res) => {
     const { mail, teacherFCM } = req.body;
 
+    console.log("teacherFCM: ", teacherFCM);
+    
     try {
         const sqlCheck = 'SELECT * FROM teachers WHERE mail = ?';
         const [existingTeacher] = await db.query(sqlCheck, [mail]);
