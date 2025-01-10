@@ -59,10 +59,7 @@ const autoRefreshAccessToken = (refreshToken) => {
 };
 
 const refreshAccessToken = async (req, res) => {
-    //const { refreshToken } = req.body;
     const refreshToken = req.cookies.refreshToken;
-
-    console.log("old refresh: ", refreshToken);
 
     if (!refreshToken) {
         return res.status(405).send('Refresh token required');
@@ -71,8 +68,6 @@ const refreshAccessToken = async (req, res) => {
     try {
         const { newAccessToken, newRefreshToken } = await autoRefreshAccessToken(refreshToken);
 
-        console.log('new access: ', newAccessToken);
-        console.log('new refresh: ', newRefreshToken);
         // Send new access token and refresh token in response headers/cookies
         res.setHeader('Authorization', `Bearer ${newAccessToken}`);
         res.cookie('refreshToken', newRefreshToken, {
@@ -82,7 +77,7 @@ const refreshAccessToken = async (req, res) => {
         });
 
         // Respond with success
-        res.send({ success: true, extra: "no", access: newAccessToken, refresh: newRefreshToken });
+        res.send({ success: true });
     } catch (refreshErr) {
         console.error('Error refreshing token:', refreshErr);
         return res.status(403).send('Invalid or expired refresh token');
