@@ -208,3 +208,49 @@ exports.getPaymentInfo = async (req, res) => {
         res.status(500).send(err);
     }
 };
+
+exports.getStudentFCMByTeacher = async (req, res) => {
+    const { classId } = req.body;
+    const teacherId = req.userId;
+
+    const sql = `SELECT studentFCM FROM classes WHERE classid = ? AND teacherid = ?`;
+
+    try {
+        const [results] = await db.query(sql, [classId, teacherId]);
+
+        if (results.length === 0) {
+            return res.status(404).json({ message: `No class ID ${classId}` });
+        }
+
+        res.status(200).json({
+            studentFCM: results[0].studentFCM
+        });
+    }
+    catch (err) {
+        console.error('Database query error:', err);
+        res.status(500).send(err);
+    }
+};
+
+exports.getTeacherFCMByStudent = async (req, res) => {
+    const { classId } = req.body;
+    const studentId = req.userId;
+
+    const sql = `SELECT teacherFCM FROM classes WHERE classid = ? AND studentid = ?`;
+
+    try {
+        const [results] = await db.query(sql, [classId, studentId]);
+
+        if (results.length === 0) {
+            return res.status(404).json({ message: `No class ID ${classId}` });
+        }
+
+        res.status(200).json({
+            teacherFCM: results[0].teacherFCM
+        });
+    }
+    catch (err) {
+        console.error('Database query error:', err);
+        res.status(500).send(err);
+    }
+};

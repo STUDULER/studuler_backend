@@ -24,4 +24,12 @@ router.get('/paymentInfo', authenticateJWT, (req, res) => {
     paymentController.getPaymentInfo(req, res)
 });
 
+router.get('/studentFCMByTeacher', authenticateJWT, (req, res) => {
+    paymentController.getStudentFCMByTeacher(req, res)
+});
+
+router.get('/teacherFCMByStudent', authenticateJWT, (req, res) => {
+    paymentController.getTeacherFCMByStudent(req, res)
+});
+
 module.exports = router;

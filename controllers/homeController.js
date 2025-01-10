@@ -38,7 +38,7 @@ exports.getClassIdS = async (req, res) => {
 
 // class created by teacher
 exports.createClassTeacher = async (req, res) => {
-    const { classname, studentname, startdate, period, time, day, hourlyrate, prepay, themecolor } = req.body;
+    const { classname, studentname, startdate, period, time, day, hourlyrate, prepay, themecolor, teacherFCM } = req.body;
     const userId = req.userId;
     console.log('Received data:', req.body);
     console.log('Authenticated teacher ID:', userId);
@@ -51,8 +51,8 @@ exports.createClassTeacher = async (req, res) => {
         }
 
         const sql = `INSERT INTO classes 
-                (classname, studentname, period, time, day, hourlyrate, prepay, themecolor, teacherid, classcode, dateofpayment, createdAt, updatedAt) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`;
+                (classname, studentname, period, time, day, hourlyrate, prepay, themecolor, teacherid, classcode, dateofpayment, teacherFCM, createdAt, updatedAt) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`;
 
         const dayMapping = { "월": 1, "화": 2, "수": 3, "목": 4, "금": 5, "토": 6, "일": 0 };
         const daysOfWeek = day.split('/').map(d => dayMapping[d]).filter(d => d !== undefined);
@@ -73,7 +73,7 @@ exports.createClassTeacher = async (req, res) => {
 
             const dates = [];
 
-            const [classResult] = await connection.query(sql, [classname, studentname, period, time, day, hourlyrate, prepay, themecolor, userId, classcode, null]);
+            const [classResult] = await connection.query(sql, [classname, studentname, period, time, day, hourlyrate, prepay, themecolor, userId, classcode, null, teacherFCM]);
 
             const classId = classResult.insertId;
 
@@ -145,7 +145,7 @@ exports.createClassTeacher = async (req, res) => {
 
 // student joins class
 exports.joinClass = async (req, res) => {
-    const { classcode } = req.body;
+    const { classcode, studentFCM } = req.body;
     const userId = req.userId;
 
     console.log('Received data:', req.body);
@@ -157,8 +157,8 @@ exports.joinClass = async (req, res) => {
         await connection.beginTransaction();
 
         // insert studentid in classes relation
-        const updateClassSql = 'UPDATE classes SET studentid = ? WHERE classcode = ? AND studentid IS NULL';
-        const [updateResult] = await connection.query(updateClassSql, [userId, classcode]);
+        const updateClassSql = 'UPDATE classes SET studentid = ?, studentFCM = ? WHERE classcode = ? AND studentid IS NULL';
+        const [updateResult] = await connection.query(updateClassSql, [userId, studentFCM, classcode]);
         if (updateResult.affectedRows === 0) {
             // No rows updated, rollback transaction
             return connection.rollback(() => {
