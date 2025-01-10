@@ -1,8 +1,8 @@
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
 const axios = require('axios');
-const { OAuth2Client } = require('google-auth-library');
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+//const { OAuth2Client } = require('google-auth-library');
+//const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const { generateTokens } = require('../jwt/auth');
 require('dotenv').config();
 
