@@ -135,7 +135,7 @@ exports.loginTeacherWithKakao = async (req, res) => {
                 });
             return res.json({ userId: teacher.teacherid, accessToken });
         } else {
-            return res.status(404).json({ isExist: false, kakaoId: kakaoId, username: username, mail: mail }); // if false, it needs sign up
+            return res.status(404).json({ isExist: false, kakaoId: kakaoId, username: username}); // if false, it needs sign up
         }
     } catch (err) {
         console.error('Kakao login error:', err);
