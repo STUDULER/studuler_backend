@@ -29,7 +29,7 @@ exports.signupStudent = async (req, res) => {
         if (mailExists) { // user already exists
             return res.status(401).json({ message: '이미 존재하는 계정입니다.' });
         }
-        
+
         const [result] = await db.query(sql, [username, password, mail, loginMethod, imageNum]);
 
         const { accessToken, refreshToken } = generateTokens(result.insertId, 'student');
@@ -163,15 +163,15 @@ exports.loginStudentWithKakao = async (req, res) => {
 }
 
 exports.loginStudentWithGoogle = async (req, res) => {
-    const { googleIdToken } = req.body;
+    const { googleId, username, mail } = req.body;
 
-    if (!googleIdToken) {
+    /*if (!googleIdToken) {
         return res.status(400).json({ message: 'Google access token is required' });
-    }
+    }*/
 
     try {
         // verify the Google access token and get user info
-        const ticket = await googleClient.verifyIdToken({
+        /*const ticket = await googleClient.verifyIdToken({
             idToken: googleIdToken,
             audience: process.env.GOOGLE_CLIENT_ID,
         });
@@ -180,6 +180,7 @@ exports.loginStudentWithGoogle = async (req, res) => {
         const googleId = googlePayload.sub; // google user ID
         const username = googlePayload.name || 'Unknown';
         const mail = googlePayload.email || null;
+        */
 
         const sqlCheck = 'SELECT * FROM students WHERE googleId = ?';
         const [existingStudent] = await db.query(sqlCheck, [googleId]);
