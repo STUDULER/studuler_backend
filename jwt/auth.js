@@ -5,7 +5,7 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 
 const generateTokens = (userId, role) => {
-    const accessToken = jwt.sign({ userId, role }, JWT_SECRET, { expiresIn: '1m' });
+    const accessToken = jwt.sign({ userId, role }, JWT_SECRET, { expiresIn: '10m' });
     const refreshToken = jwt.sign({ userId, role }, JWT_REFRESH_SECRET, { expiresIn: '180d' });
 
     return { accessToken, refreshToken };
@@ -45,7 +45,7 @@ const autoRefreshAccessToken = (refreshToken) => {
             const newAccessToken = jwt.sign(
                 { userId: decoded.userId, role: decoded.role },
                 JWT_SECRET,
-                { expiresIn: '1m' } // new access token
+                { expiresIn: '10m' } // new access token
             );
 
             const newRefreshToken = jwt.sign(
