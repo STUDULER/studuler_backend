@@ -157,8 +157,8 @@ exports.loginStudentWithKakao = async (req, res) => {
         }
     } catch (err) {
         console.error('Kakao login error:', err);
-        if (err.response && err.response.status === 401) {
-            return res.status(401).json({ message: 'Invalid Kakao access token' });
+        if (err.response && err.response.status === 403) {
+            return res.status(403).json({ message: 'Invalid Kakao access token' });
         }
         return res.status(500).json({ message: 'Failed to log in with Kakao', error: err.message });
     }
