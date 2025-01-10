@@ -67,7 +67,10 @@ exports.loginTeacher = async (req, res) => {
         const teacher = results[0];
         const { accessToken, refreshToken } = generateTokens(teacher.teacherid, 'teacher');
         if (teacherFCM) {
-            await updateTeacherFCM(teacher.teacherid, teacherFCM);
+            const updateResult = await updateTeacherFCM(teacher.teacherid, teacherFCM);
+            if (!updateResult.success) {
+                return res.status(404).json({ message: updateResult.message });
+            }
         }
 
         res.cookie('refreshToken', refreshToken, {
@@ -111,7 +114,10 @@ exports.loginTeacherWithKakao = async (req, res) => {
             const teacher = existingTeacher[0];
             const { accessToken, refreshToken } = generateTokens(teacher.teacherid, 'teacher');
             if (teacherFCM) {
-                await updateTeacherFCM(teacher.teacherid, teacherFCM);
+                const updateResult = await updateTeacherFCM(teacher.teacherid, teacherFCM);
+                if (!updateResult.success) {
+                    return res.status(404).json({ message: updateResult.message });
+                }
             }
             res.cookie('refreshToken', refreshToken,
                 {
@@ -137,7 +143,7 @@ exports.loginTeacherWithGoogle = async (req, res) => {
     const { mail, teacherFCM } = req.body;
 
     console.log("teacherFCM: ", teacherFCM);
-    
+
     try {
         const sqlCheck = 'SELECT * FROM teachers WHERE mail = ?';
         const [existingTeacher] = await db.query(sqlCheck, [mail]);
@@ -146,7 +152,10 @@ exports.loginTeacherWithGoogle = async (req, res) => {
             const teacher = existingTeacher[0];
             const { accessToken, refreshToken } = generateTokens(teacher.teacherid, 'teacher');
             if (teacherFCM) {
-                await updateTeacherFCM(teacher.teacherid, teacherFCM);
+                const updateResult = await updateTeacherFCM(teacher.teacherid, teacherFCM);
+                if (!updateResult.success) {
+                    return res.status(404).json({ message: updateResult.message });
+                }
             }
             res.cookie('refreshToken', refreshToken, {
                 httpOnly: true,
@@ -179,13 +188,13 @@ const updateTeacherFCM = async (teacherId, teacherFCM) => {
         const [result] = await db.query(sql, [teacherFCM, teacherId]);
 
         if (result.affectedRows === 0) {
-            return res.status(404).json({ message: `No class found for teacher ID ${teacherId}` });
+            return { success: false, message: `No teacher found for teacher ID ${teacherId}` };
         }
 
-        res.status(200).json({ message: "Teacher's FCM updated successfully" });
+        return { success: true, message: "Teacher's FCM updated successfully" };
     } catch (err) {
         console.error('Database query error:', err);
-        res.status(500).send({ message: "Error updating FCM" });
+        return { success: false, message: "Error updating FCM", error: err };
     }
 };
 

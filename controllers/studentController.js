@@ -65,7 +65,10 @@ exports.loginStudent = async (req, res) => {
         const student = results[0];
         const { accessToken, refreshToken } = generateTokens(student.studentid, 'student');
         if (studentFCM) {
-            await updateStudentFCM(student.studentid, studentFCM);
+            const updateResult = await updateStudentFCM(student.studentid, studentFCM);
+            if (!updateResult.success) {
+                return res.status(404).json({ message: updateResult.message });
+            }
         }
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
@@ -138,7 +141,10 @@ exports.loginStudentWithKakao = async (req, res) => {
             const student = existingStudent[0];
             const { accessToken, refreshToken } = generateTokens(student.studentid, 'student');
             if (studentFCM) {
-                await updateStudentFCM(student.studentid, studentFCM);
+                const updateResult = await updateStudentFCM(student.studentid, studentFCM);
+                if (!updateResult.success) {
+                    return res.status(404).json({ message: updateResult.message });
+                }
             }
             res.cookie('refreshToken', refreshToken,
                 {
@@ -196,7 +202,10 @@ exports.loginStudentWithGoogle = async (req, res) => {
             const student = existingStudent[0];
             const { accessToken, refreshToken } = generateTokens(student.studentid, 'student');
             if (studentFCM) {
-                await updateStudentFCM(student.studentid, studentFCM);
+                const updateResult = await updateStudentFCM(student.studentid, studentFCM);
+                if (!updateResult.success) {
+                    return res.status(404).json({ message: updateResult.message });
+                }
             }
             res.cookie('refreshToken', refreshToken, {
                 httpOnly: true,
@@ -236,13 +245,13 @@ const updateStudentFCM = async (studentId, studentFCM) => {
         const [result] = await db.query(sql, [studentFCM, studentId]);
 
         if (result.affectedRows === 0) {
-            return res.status(404).json({ message: `No class found for student ID ${studentId}` });
+            return { success: false, message: `No teacher found for teacher ID ${teacherId}` };
         }
 
-        res.status(200).json({ message: "Student's FCM updated successfully" });
+        return { success: true, message: "Teacher's FCM updated successfully" };
     } catch (err) {
         console.error('Database query error:', err);
-        res.status(500).send({ message: "Error updating FCM" });
+        return { success: false, message: "Error updating FCM", error: err };
     }
 };
 
