@@ -24,12 +24,19 @@ exports.signupTeacher = async (req, res) => {
     const { username, password, account, bank, name, mail, loginMethod, imageNum, kakaoId } = req.body;
     console.log('Received data:', req.body);
 
-    const checkSql = 'SELECT COUNT(*) AS count FROM teachers WHERE mail = ?';
+    let checkSql, checkParams;
+    if (kakaoId) {
+        checkSql = 'SELECT COUNT(*) AS count FROM teachers WHERE kakaoId = ?';
+        checkParams = [kakaoId];
+    } else{
+        checkSql = 'SELECT COUNT(*) AS count FROM teachers WHERE mail = ?';
+        checkParams = [mail];
+    }
     const sql = 'INSERT INTO teachers (username, password, account, bank, name, mail, loginMethod, imageNum, kakaoId, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
     try {
-        const [checkResult] = await db.query(checkSql, [mail]);
-        const mailExists = checkResult[0].count > 0;
-        if (mailExists) { // user already exists
+        const [checkResult] = await db.query(checkSql, checkParams);
+        const exists = checkResult[0].count > 0;
+        if (exists) { // user already exists
             return res.status(401).json({ message: '이미 존재하는 계정입니다.' });
         }
 
@@ -186,11 +193,6 @@ const updateTeacherFCM = async (teacherId, teacherFCM) => {
 
     try {
         const [result] = await db.query(sql, [teacherFCM, teacherId]);
-
-        /*if (result.affectedRows === 0) {
-            return { success: false, message: `No teacher found for teacher ID ${teacherId}` };
-        }*/
-
         return { success: true, message: "Teacher's FCM updated successfully" };
     } catch (err) {
         console.error('Database query error:', err);

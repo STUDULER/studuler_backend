@@ -178,23 +178,7 @@ exports.loginStudentWithKakao = async (req, res) => {
 exports.loginStudentWithGoogle = async (req, res) => {
     const { username, mail, studentFCM } = req.body;
 
-    /*if (!googleIdToken) {
-        return res.status(400).json({ message: 'Google access token is required' });
-    }*/
-
     try {
-        // verify the Google access token and get user info
-        /*const ticket = await googleClient.verifyIdToken({
-            idToken: googleIdToken,
-            audience: process.env.GOOGLE_CLIENT_ID,
-        });
-
-        const googlePayload = ticket.getPayload();
-        const googleId = googlePayload.sub; // google user ID
-        const username = googlePayload.name || 'Unknown';
-        const mail = googlePayload.email || null;
-        */
-
         const sqlCheck = 'SELECT * FROM students WHERE mail = ?';
         const [existingStudent] = await db.query(sqlCheck, [mail]);
 
@@ -244,11 +228,7 @@ const updateStudentFCM = async (studentId, studentFCM) => {
     try {
         const [result] = await db.query(sql, [studentFCM, studentId]);
 
-        if (result.affectedRows === 0) {
-            return { success: false, message: `No teacher found for teacher ID ${teacherId}` };
-        }
-
-        return { success: true, message: "Teacher's FCM updated successfully" };
+        return { success: true, message: "Student's FCM updated successfully" };
     } catch (err) {
         console.error('Database query error:', err);
         return { success: false, message: "Error updating FCM", error: err };
