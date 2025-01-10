@@ -64,8 +64,9 @@ exports.loginStudent = async (req, res) => {
 
         const student = results[0];
         const { accessToken, refreshToken } = generateTokens(student.studentid, 'student');
-        await updateStudentFCM(student.studentid, studentFCM);
-
+        if (studentFCM) {
+            await updateStudentFCM(student.studentid, studentFCM);
+        }
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
             // secure: true, // ensure the cookie only sent over HTTPS
@@ -136,8 +137,9 @@ exports.loginStudentWithKakao = async (req, res) => {
         if (existingStudent.length > 0) {
             const student = existingStudent[0];
             const { accessToken, refreshToken } = generateTokens(student.studentid, 'student');
-            await updateStudentFCM(student.studentid, studentFCM);
-
+            if (studentFCM) {
+                await updateStudentFCM(student.studentid, studentFCM);
+            }
             res.cookie('refreshToken', refreshToken,
                 {
                     httpOnly: true,
@@ -193,8 +195,9 @@ exports.loginStudentWithGoogle = async (req, res) => {
         if (existingStudent.length > 0) {
             const student = existingStudent[0];
             const { accessToken, refreshToken } = generateTokens(student.studentid, 'student');
-            await updateStudentFCM(student.studentid, studentFCM);
-
+            if (studentFCM) {
+                await updateStudentFCM(student.studentid, studentFCM);
+            }
             res.cookie('refreshToken', refreshToken, {
                 httpOnly: true,
                 //secure: process.env.NODE_ENV === 'production', // use HTTPS in production

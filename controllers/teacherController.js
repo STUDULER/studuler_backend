@@ -66,7 +66,9 @@ exports.loginTeacher = async (req, res) => {
 
         const teacher = results[0];
         const { accessToken, refreshToken } = generateTokens(teacher.teacherid, 'teacher');
-        await updateTeacherFCM(teacher.teacherid, teacherFCM);
+        if (teacherFCM) {
+            await updateTeacherFCM(teacher.teacherid, teacherFCM);
+        }
 
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
@@ -108,8 +110,9 @@ exports.loginTeacherWithKakao = async (req, res) => {
         if (existingTeacher.length > 0) {
             const teacher = existingTeacher[0];
             const { accessToken, refreshToken } = generateTokens(teacher.teacherid, 'teacher');
-            await updateTeacherFCM(teacher.teacherid, teacherFCM);
-
+            if (teacherFCM) {
+                await updateTeacherFCM(teacher.teacherid, teacherFCM);
+            }
             res.cookie('refreshToken', refreshToken,
                 {
                     httpOnly: true,
@@ -140,8 +143,9 @@ exports.loginTeacherWithGoogle = async (req, res) => {
         if (existingTeacher.length > 0) {
             const teacher = existingTeacher[0];
             const { accessToken, refreshToken } = generateTokens(teacher.teacherid, 'teacher');
-            await updateTeacherFCM(teacher.teacherid, teacherFCM);
-
+            if (teacherFCM) {
+                await updateTeacherFCM(teacher.teacherid, teacherFCM);
+            }
             res.cookie('refreshToken', refreshToken, {
                 httpOnly: true,
                 //secure: process.env.NODE_ENV === 'production', // use HTTPS in production
