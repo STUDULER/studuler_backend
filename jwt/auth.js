@@ -53,7 +53,7 @@ const autoRefreshAccessToken = (refreshToken) => {
                 JWT_REFRESH_SECRET,
                 { expiresIn: '180d' } // New refresh token with 180 days expiry
             );
-            resolve(newAccessToken, newRefreshToken);
+            resolve({ newAccessToken, newRefreshToken });
         });
     });
 };
@@ -62,6 +62,8 @@ const refreshAccessToken = async (req, res) => {
     const { refreshToken } = req.body;
     //const refreshToken = req.cookies.refreshToken;
 
+    console.log("old refresh: ", refreshToken);
+
     if (!refreshToken) {
         return res.status(405).send('Refresh token required');
     }
@@ -69,8 +71,8 @@ const refreshAccessToken = async (req, res) => {
     try {
         const { newAccessToken, newRefreshToken } = await autoRefreshAccessToken(refreshToken);
 
-        console.log('access: ', newAccessToken);
-        console.log('refresh: ', newRefreshToken);
+        console.log('new access: ', newAccessToken);
+        console.log('new refresh: ', newRefreshToken);
         // Send new access token and refresh token in response headers/cookies
         res.setHeader('Authorization', `Bearer ${newAccessToken}`);
         res.cookie('refreshToken', newRefreshToken, {
