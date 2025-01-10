@@ -155,7 +155,7 @@ exports.loginStudentWithKakao = async (req, res) => {
                 });
             return res.json({ userId: student.studentId, accessToken });
         } else {
-            const studentData = await signupWithKakao(username, mail, 2, kakaoId);
+            const studentData = await signupWithKakao(username, mail, 1, kakaoId);
 
             res.cookie('refreshToken', studentData.refreshToken, {
                 httpOnly: true,
@@ -200,7 +200,7 @@ exports.loginStudentWithGoogle = async (req, res) => {
 
             return res.json({ userId: student.studentid, accessToken });
         } else { // if user doesn't exist, it needs sign up
-            const studentData = await signupWithGoogle(username, mail, 3);
+            const studentData = await signupWithGoogle(username, mail, 2);
 
             res.cookie('refreshToken', studentData.refreshToken, {
                 httpOnly: true,
