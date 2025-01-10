@@ -5,7 +5,7 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 
 const generateTokens = (userId, role) => {
-    const accessToken = jwt.sign({ userId, role }, JWT_SECRET, { expiresIn: '10m' });
+    const accessToken = jwt.sign({ userId, role }, JWT_SECRET, { expiresIn: '1m' });
     const refreshToken = jwt.sign({ userId, role }, JWT_REFRESH_SECRET, { expiresIn: '180d' });
 
     return { accessToken, refreshToken };
@@ -14,9 +14,9 @@ const generateTokens = (userId, role) => {
 const authenticateJWT = (req, res, next) => { // verify the token
     const authHeader = req.headers.authorization;
     const accessToken = authHeader && authHeader.split(' ')[1];
-    const refreshToken = req.cookies?.refreshToken || req.headers['authorization'];
+    const refreshToken = req.headers['authorization'];
     if (!refreshToken) {
-        return res.status(405).json({ message: 'Refresh token required' });
+        return res.status(403).json({ message: 'Refresh token required' });
     }
 
     if (!accessToken) {
