@@ -59,7 +59,8 @@ const autoRefreshAccessToken = (refreshToken) => {
 };
 
 const refreshAccessToken = async (req, res) => {
-    const refreshToken = req.cookies.refreshToken;
+    const { refreshToken } = req.body;
+    //const refreshToken = req.cookies.refreshToken;
 
     if (!refreshToken) {
         return res.status(405).send('Refresh token required');
