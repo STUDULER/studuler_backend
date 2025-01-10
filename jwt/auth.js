@@ -93,6 +93,6 @@ const logout = (req, res) => {
 };
 
 module.exports = authenticateJWT;
-module.exports = generateTokens;
+module.exports = { generateTokens };
 module.exports = refreshAccessToken;
 module.exports = logout;
