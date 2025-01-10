@@ -201,7 +201,6 @@ exports.getEachClassTeacher = async (req, res) => {
     // 학생이름, 요일, 정산방법, 수업횟수, 다음정산일, 수업코드, 제목, 진행수업횟수, 테마색상
     const sql = `
         SELECT 
-            S.name, 
             C.classid, 
             C.studentname,
             C.classcode, 
@@ -217,9 +216,7 @@ exports.getEachClassTeacher = async (req, res) => {
         FROM 
             classes AS C
         JOIN 
-            teachers AS T ON T.teacherid = C.teacherid
-        LEFT JOIN
-            students AS S ON C.studentid = S.studentid AND C.studentid IS NOT NULL
+            teachers AS T ON T.teacherid = C.teacherid 
         LEFT JOIN (
             SELECT 
                 D.classid, 
