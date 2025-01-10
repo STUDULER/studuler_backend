@@ -153,7 +153,7 @@ exports.loginStudentWithKakao = async (req, res) => {
                 maxAge: 6 * 30 * 24 * 60 * 60 * 1000, // 6 months
             });
 
-            return res.json({ accessToken });
+            return res.json({ accessToken: studentData.accessToken });
         }
     } catch (err) {
         console.error('Kakao login error:', err);
@@ -162,7 +162,7 @@ exports.loginStudentWithKakao = async (req, res) => {
         }
         return res.status(500).json({ message: 'Failed to log in with Kakao', error: err.message });
     }
-}
+};
 
 exports.loginStudentWithGoogle = async (req, res) => {
     const { googleId, username, mail } = req.body;
