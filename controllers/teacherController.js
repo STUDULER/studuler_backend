@@ -96,14 +96,14 @@ exports.loginTeacher = async (req, res) => {
 };
 
 exports.loginTeacherWithKakao = async (req, res) => {
-    const { kakaoAccessToken, teacherFCM } = req.body;
+    const { kakaoId, username, teacherFCM } = req.body;
 
-    if (!kakaoAccessToken) {
+    /*if (!kakaoAccessToken) {
         return res.status(400).json({ message: 'Kakao access token is required' });
-    }
+    }*/
 
     try {
-        const kakaoResponse = await axios.get('https://kapi.kakao.com/v2/user/me', {
+        /*const kakaoResponse = await axios.get('https://kapi.kakao.com/v2/user/me', {
             headers: {
                 Authorization: `Bearer ${kakaoAccessToken}`,
             },
@@ -112,7 +112,7 @@ exports.loginTeacherWithKakao = async (req, res) => {
         const kakaoProfile = kakaoResponse.data;
         const kakaoId = kakaoProfile.id;
         const username = kakaoProfile.properties?.nickname || 'Unknown';
-        const mail = kakaoProfile.kakao_account?.email || null;
+        const mail = kakaoProfile.kakao_account?.email || null;*/
 
         const sqlCheck = 'SELECT * FROM teachers WHERE kakaoId = ?';
         const [existingTeacher] = await db.query(sqlCheck, [kakaoId]);
