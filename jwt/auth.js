@@ -30,8 +30,13 @@ const authenticateJWT = (req, res, next) => { // verify the token
             }
 
             try {
-                const newAccessToken = await autoRefreshAccessToken(refreshToken);
+                const {newAccessToken, newRefreshToken } = await autoRefreshAccessToken(refreshToken);
                 res.setHeader('Authorization', `Bearer ${newAccessToken}`);
+                res.cookie('refreshToken', newRefreshToken, {
+                    httpOnly: true,
+                    sameSite: 'Strict',
+                    maxAge: 6 * 30 * 24 * 60 * 60 * 1000, // 6 months
+                });
                 req.headers.authorization = `Bearer ${newAccessToken}`; // Update the request with the new token
                 req.userId = decoded.userId;
                 req.role = decoded.role;
@@ -63,9 +68,15 @@ const autoRefreshAccessToken = (refreshToken) => {
             const newAccessToken = jwt.sign(
                 { userId: decoded.userId, role: decoded.role },
                 JWT_SECRET,
-                { expiresIn: '10m' } // new access token
+                { expiresIn: '1m' } // new access token
             );
-            resolve(newAccessToken);
+
+            const newRefreshToken = jwt.sign(
+                { userId: decoded.userId, role: decoded.role },
+                JWT_REFRESH_SECRET,
+                { expiresIn: '180d' } // New refresh token with 180 days expiry
+            );
+            resolve(newAccessToken, newRefreshToken);
         });
     });
 };
