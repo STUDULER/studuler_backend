@@ -128,15 +128,15 @@ exports.loginTeacherWithKakao = async (req, res) => {
 }
 
 exports.loginTeacherWithGoogle = async (req, res) => {
-    const { googleIdToken } = req.body;
+    const { googleId } = req.body;
 
-    if (!googleIdToken) {
+    /*if (!googleIdToken) {
         return res.status(400).json({ message: 'Google access token is required' });
-    }
+    }*/
 
     try {
         // verify the Google access token and get user info
-        const ticket = await googleClient.verifyIdToken({
+        /*const ticket = await googleClient.verifyIdToken({
             idToken: googleIdToken,
             audience: process.env.GOOGLE_CLIENT_ID,
         });
@@ -145,7 +145,7 @@ exports.loginTeacherWithGoogle = async (req, res) => {
         const googleId = googlePayload.sub; // google user ID
         const username = googlePayload.name || 'Unknown';
         const mail = googlePayload.email || null;
-
+        */
         const sqlCheck = 'SELECT * FROM teachers WHERE googleId = ?';
         const [existingTeacher] = await db.query(sqlCheck, [googleId]);
 
@@ -163,10 +163,7 @@ exports.loginTeacherWithGoogle = async (req, res) => {
             return res.json({ accessToken });
         } else { // if user doesn't exist, it needs sign up
             return res.status(404).json({
-                isExist: false,
-                googleId: googleId,
-                username: username,
-                mail: mail
+                isExist: false
             });
         }
     } catch (err) {
