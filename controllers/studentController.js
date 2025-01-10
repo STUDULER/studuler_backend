@@ -88,7 +88,7 @@ exports.loginStudent = async (req, res) => {
 const signupWithKakao = async (username, loginMethod, kakaoId) => {
     const sql = 'INSERT INTO students (username, loginMethod, kakaoId, createdAt, updatedAt) VALUES (?, ?, ?, NOW(), NOW())';
     try {
-        const [result] = await db.query(sql, [username, mail, loginMethod, kakaoId]);
+        const [result] = await db.query(sql, [username, loginMethod, kakaoId]);
 
         const { accessToken, refreshToken } = generateTokens(result.insertId, 'student');
 
@@ -155,7 +155,7 @@ exports.loginStudentWithKakao = async (req, res) => {
                 });
             return res.json({ userId: student.studentId, accessToken });
         } else {
-            const studentData = await signupWithKakao(username, mail, 1, kakaoId);
+            const studentData = await signupWithKakao(username, 1, kakaoId);
 
             res.cookie('refreshToken', studentData.refreshToken, {
                 httpOnly: true,
