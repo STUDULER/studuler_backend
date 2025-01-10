@@ -187,9 +187,9 @@ const updateTeacherFCM = async (teacherId, teacherFCM) => {
     try {
         const [result] = await db.query(sql, [teacherFCM, teacherId]);
 
-        if (result.affectedRows === 0) {
+        /*if (result.affectedRows === 0) {
             return { success: false, message: `No teacher found for teacher ID ${teacherId}` };
-        }
+        }*/
 
         return { success: true, message: "Teacher's FCM updated successfully" };
     } catch (err) {
