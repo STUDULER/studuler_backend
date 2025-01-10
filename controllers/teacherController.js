@@ -25,7 +25,7 @@ exports.signupTeacher = async (req, res) => {
     const { username, password, account, bank, name, mail, loginMethod, imageNum, kakaoId, googleId } = req.body;
     console.log('Received data:', req.body);
 
-    const checkSql = 'SELECT COUNT(*) AS count FROM teachers WHERE mail = ?';
+    const checkSql = 'SELECT COUNT(*) AS count FROM teachers WHERE googleId = ?';
     const sql = 'INSERT INTO teachers (username, password, account, bank, name, mail, loginMethod, imageNum, kakaoId, googleId, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())';
     try {
         const [checkResult] = await db.query(checkSql, [mail]);

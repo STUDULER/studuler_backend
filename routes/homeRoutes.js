@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 const homeController = require('../controllers/homeController');
-const authenticateJWT = require('../jwt/auth');
+const { authenticateJWT } = require('../jwt/auth');
 
 // get all classes
 router.get('/', homeController.getClasses);

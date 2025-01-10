@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const teacherController = require('../controllers/teacherController');
-const authenticateJWT = require('../jwt/auth');
+const { authenticateJWT } = require('../jwt/auth');
 const multer = require('multer');
 const upload = multer();
 

@@ -6,7 +6,7 @@ const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 
 const generateTokens = (userId, role) => {
     const accessToken = jwt.sign({ userId, role }, JWT_SECRET, { expiresIn: '10m' });
-    const refreshToken = jwt.sign({ userId, role }, JWT_REFRESH_SECRET, { expiresIn: '6M' });
+    const refreshToken = jwt.sign({ userId, role }, JWT_REFRESH_SECRET, { expiresIn: '180d' });
 
     return { accessToken, refreshToken };
 };
@@ -92,7 +92,9 @@ const logout = (req, res) => {
     res.send('Logged out successfully');
 };
 
-module.exports = authenticateJWT;
-module.exports = { generateTokens };
-module.exports = refreshAccessToken;
-module.exports = logout;
+module.exports = {
+    generateTokens,
+    authenticateJWT,
+    refreshAccessToken,
+    logout,
+};

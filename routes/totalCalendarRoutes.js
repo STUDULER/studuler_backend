@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 const totalCalendarController = require('../controllers/totalCalendarController');
-const authenticateJWT = require('../jwt/auth');
+const { authenticateJWT } = require('../jwt/auth');
 
 router.get('/', totalCalendarController.getClassesid);
 
