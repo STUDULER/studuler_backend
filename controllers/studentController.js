@@ -95,10 +95,10 @@ const signupWithKakao = async (username, mail, loginMethod, kakaoId) => {
     }
 };
 
-const signupWithGoogle = async (username, mail, loginMethod, googleId) => {
-    const sql = 'INSERT INTO students (username, mail, loginMethod, googleId, createdAt, updatedAt) VALUES (?, ?, ?, ?, NOW(), NOW())';
+const signupWithGoogle = async (username, mail, loginMethod) => {
+    const sql = 'INSERT INTO students (username, mail, loginMethod, createdAt, updatedAt) VALUES (?, ?, ?, NOW(), NOW())';
     try {
-        const [result] = await db.query(sql, [username, mail, loginMethod, googleId]);
+        const [result] = await db.query(sql, [username, mail, loginMethod]);
 
         const { accessToken, refreshToken } = generateTokens(result.insertId, 'student');
 
@@ -165,7 +165,7 @@ exports.loginStudentWithKakao = async (req, res) => {
 };
 
 exports.loginStudentWithGoogle = async (req, res) => {
-    const { googleId, username, mail } = req.body;
+    const { username, mail } = req.body;
 
     /*if (!googleIdToken) {
         return res.status(400).json({ message: 'Google access token is required' });
@@ -184,8 +184,8 @@ exports.loginStudentWithGoogle = async (req, res) => {
         const mail = googlePayload.email || null;
         */
 
-        const sqlCheck = 'SELECT * FROM students WHERE googleId = ?';
-        const [existingStudent] = await db.query(sqlCheck, [googleId]);
+        const sqlCheck = 'SELECT * FROM students WHERE mail = ?';
+        const [existingStudent] = await db.query(sqlCheck, [mail]);
 
         if (existingStudent.length > 0) {
             const student = existingStudent[0];
@@ -200,7 +200,7 @@ exports.loginStudentWithGoogle = async (req, res) => {
 
             return res.json({ accessToken });
         } else { // if user doesn't exist, it needs sign up
-            const studentData = await signupWithGoogle(username, mail, 3, googleId);
+            const studentData = await signupWithGoogle(username, mail, 3);
 
             res.cookie('refreshToken', studentData.refreshToken, {
                 httpOnly: true,
