@@ -67,7 +67,7 @@ exports.loginStudent = async (req, res) => {
         if (studentFCM) {
             const updateResult = await updateStudentFCM(student.studentid, studentFCM);
             if (!updateResult.success) {
-                return res.status(404).json({ message: updateResult.message });
+                return res.status(401).json({ message: updateResult.message });
             }
         }
         res.cookie('refreshToken', refreshToken, {
@@ -143,7 +143,7 @@ exports.loginStudentWithKakao = async (req, res) => {
             if (studentFCM) {
                 const updateResult = await updateStudentFCM(student.studentid, studentFCM);
                 if (!updateResult.success) {
-                    return res.status(404).json({ message: updateResult.message });
+                    return res.status(401).json({ message: updateResult.message });
                 }
             }
             res.cookie('refreshToken', refreshToken,
@@ -204,7 +204,7 @@ exports.loginStudentWithGoogle = async (req, res) => {
             if (studentFCM) {
                 const updateResult = await updateStudentFCM(student.studentid, studentFCM);
                 if (!updateResult.success) {
-                    return res.status(404).json({ message: updateResult.message });
+                    return res.status(401).json({ message: updateResult.message });
                 }
             }
             res.cookie('refreshToken', refreshToken, {

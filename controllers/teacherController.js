@@ -69,7 +69,7 @@ exports.loginTeacher = async (req, res) => {
         if (teacherFCM) {
             const updateResult = await updateTeacherFCM(teacher.teacherid, teacherFCM);
             if (!updateResult.success) {
-                return res.status(404).json({ message: updateResult.message });
+                return res.status(401).json({ message: updateResult.message });
             }
         }
 
@@ -116,7 +116,7 @@ exports.loginTeacherWithKakao = async (req, res) => {
             if (teacherFCM) {
                 const updateResult = await updateTeacherFCM(teacher.teacherid, teacherFCM);
                 if (!updateResult.success) {
-                    return res.status(404).json({ message: updateResult.message });
+                    return res.status(401).json({ message: updateResult.message });
                 }
             }
             res.cookie('refreshToken', refreshToken,
@@ -154,7 +154,7 @@ exports.loginTeacherWithGoogle = async (req, res) => {
             if (teacherFCM) {
                 const updateResult = await updateTeacherFCM(teacher.teacherid, teacherFCM);
                 if (!updateResult.success) {
-                    return res.status(404).json({ message: updateResult.message });
+                    return res.status(401).json({ message: updateResult.message });
                 }
             }
             res.cookie('refreshToken', refreshToken, {
