@@ -26,7 +26,7 @@ exports.signupTeacher = async (req, res) => {
     console.log('Received data:', req.body);
 
     const checkSql = 'SELECT COUNT(*) AS count FROM teachers WHERE mail = ?';
-    const sql = 'INSERT INTO teachers (username, password, account, bank, name, mail, loginMethod, imageNum, kakaoId, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())';
+    const sql = 'INSERT INTO teachers (username, password, account, bank, name, mail, loginMethod, imageNum, kakaoId, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
     try {
         const [checkResult] = await db.query(checkSql, [mail]);
         const mailExists = checkResult[0].count > 0;
@@ -34,7 +34,7 @@ exports.signupTeacher = async (req, res) => {
             return res.status(401).json({ message: '이미 존재하는 계정입니다.' });
         }
 
-        const [result] = await db.query(sql, [username, password, account, bank, name, mail, loginMethod, imageNum, kakaoId]);
+        const [result] = await db.query(sql, [username, password, account, bank, name, mail, loginMethod, imageNum, kakaoId, new Date(), new Date()]);
 
         const { accessToken, refreshToken } = generateTokens(result.insertId, 'teacher');
         res.cookie('refreshToken', refreshToken, {
