@@ -1,5 +1,6 @@
 const express = require('express');
 const app = express();
+const cookieParser = require('cookie-parser');
 const teacherRoutes = require('./routes/teacherRoutes');
 const studentRoutes = require('./routes/studentRoutes');
 const homeRoutes = require('./routes/homeRoutes');
@@ -14,6 +15,7 @@ const PORT = 8443;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 app.use('/teachers', teacherRoutes); // just for checking work easily
 //app.use('/teachers', authenticateJWT, teacherRoutes); // this is correct one
