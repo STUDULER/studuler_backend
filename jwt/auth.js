@@ -14,7 +14,10 @@ const generateTokens = (userId, role) => {
 const authenticateJWT = (req, res, next) => { // verify the token
     const authHeader = req.headers.authorization;
     const accessToken = authHeader && authHeader.split(' ')[1];
-    const refreshToken = req.cookies.refreshToken;
+    const refreshToken = req.cookies?.refreshToken || req.headers['authorization'];
+    if (!refreshToken) {
+        return res.status(405).json({ message: 'Refresh token required' });
+    }
 
     if (!accessToken) {
         return res.status(403).send('Access token required');
