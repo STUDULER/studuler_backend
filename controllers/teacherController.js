@@ -22,11 +22,11 @@ exports.getTeachers = async (req, res) => {
 
 // when teacher signs up
 exports.signupTeacher = async (req, res) => {
-    const { username, password, account, bank, name, mail, loginMethod, imageNum, kakaoId, googleId } = req.body;
+    const { username, password, account, bank, name, mail, loginMethod, imageNum, kakaoId } = req.body;
     console.log('Received data:', req.body);
 
-    const checkSql = 'SELECT COUNT(*) AS count FROM teachers WHERE googleId = ?';
-    const sql = 'INSERT INTO teachers (username, password, account, bank, name, mail, loginMethod, imageNum, kakaoId, googleId, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())';
+    const checkSql = 'SELECT COUNT(*) AS count FROM teachers WHERE mail = ?';
+    const sql = 'INSERT INTO teachers (username, password, account, bank, name, mail, loginMethod, imageNum, kakaoId, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())';
     try {
         const [checkResult] = await db.query(checkSql, [mail]);
         const mailExists = checkResult[0].count > 0;
@@ -34,7 +34,7 @@ exports.signupTeacher = async (req, res) => {
             return res.status(401).json({ message: '이미 존재하는 계정입니다.' });
         }
 
-        const [result] = await db.query(sql, [username, password, account, bank, name, mail, loginMethod, imageNum, kakaoId, googleId]);
+        const [result] = await db.query(sql, [username, password, account, bank, name, mail, loginMethod, imageNum, kakaoId]);
 
         const { accessToken, refreshToken } = generateTokens(result.insertId, 'teacher');
         res.cookie('refreshToken', refreshToken, {
@@ -128,7 +128,7 @@ exports.loginTeacherWithKakao = async (req, res) => {
 }
 
 exports.loginTeacherWithGoogle = async (req, res) => {
-    const { googleId } = req.body;
+    const { mail } = req.body;
 
     /*if (!googleIdToken) {
         return res.status(400).json({ message: 'Google access token is required' });
@@ -146,8 +146,8 @@ exports.loginTeacherWithGoogle = async (req, res) => {
         const username = googlePayload.name || 'Unknown';
         const mail = googlePayload.email || null;
         */
-        const sqlCheck = 'SELECT * FROM teachers WHERE googleId = ?';
-        const [existingTeacher] = await db.query(sqlCheck, [googleId]);
+        const sqlCheck = 'SELECT * FROM teachers WHERE mail = ?';
+        const [existingTeacher] = await db.query(sqlCheck, [mail]);
 
         if (existingTeacher.length > 0) {
             const teacher = existingTeacher[0];
