@@ -170,7 +170,7 @@ function sendPushNotification(token, message) {
 }
 
 // cron job: runs daily at 9 AM
-cron.schedule('27 09 * * *', () => { // 9 am KST == 12 am UTC
+cron.schedule('35 09 * * *', () => { // 9 am KST == 12 am UTC
     console.log("Checking for payment reminders...");
     const query = 'SELECT classid, studentFCM FROM classes WHERE DATE(dateofpayment) = CURDATE()';
 
@@ -182,6 +182,7 @@ cron.schedule('27 09 * * *', () => { // 9 am KST == 12 am UTC
             console.error("Error querying the database:", err);
             return;
         }
+        console.log("Query results:", results);
 
         if (results.length === 0) {
             console.log("No payment reminders found for today.");
