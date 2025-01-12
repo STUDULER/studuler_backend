@@ -1,5 +1,8 @@
 const db = require('../config/db');
 const cron = require('node-cron');
+const admin = require('firebase-admin');
+const serviceAccount = require(path.resolve(`${process.env.FIREBASE_SERVICE_ACCOUNT}.json`));
+require('dotenv').config();
 
 const generateNextDates = async (classId) => {
     try {
@@ -136,3 +139,43 @@ exports.debugNextDates = async (req, res) => {
         console.error("Error in scheduled task:", err);
     }
 };
+
+// manage firebase
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+});
+
+// send push notification
+function sendPushNotification(token, message) {
+    const payload = {
+        notification: {
+            title: "정산 알림",
+            body: message,
+        },
+    };
+
+    admin.messaging().sendToDevice(token, payload)
+        .then((response) => {
+            console.log("Successfully sent message:", response);
+        })
+        .catch((error) => {
+            console.error("Error sending message:", error);
+        });
+}
+
+// cron job: runs daily at 9 AM
+cron.schedule('0 9 * * *', () => { // 9 am KST == 12 am UTC
+    const query = 'SELECT classid, studentFCM FROM classes WHERE DATE(dateofpayment) = CURDATE()';
+
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error("Error querying the database:", err);
+            return;
+        }
+
+        results.forEach(row => {
+            // Assuming you have a `token` field in your `classes` table to send notifications
+            sendPushNotification(row.studentFCM, "오늘은 정산일입니다!");
+        });
+    });
+});
