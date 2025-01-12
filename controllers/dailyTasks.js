@@ -3,7 +3,8 @@ const cron = require('node-cron');
 const admin = require('firebase-admin');
 const path = require('path');
 require('dotenv').config();
-const serviceAccount = require(path.resolve(`${process.env.FIREBASE_SERVICE_ACCOUNT}.json`));
+//const serviceAccount = require(path.resolve(`${process.env.FIREBASE_SERVICE_ACCOUNT}.json`));
+const serviceAccount = require(`./${process.env.FIREBASE_SERVICE_ACCOUNT}.json`);
 
 const generateNextDates = async (classId) => {
     try {
@@ -169,14 +170,22 @@ cron.schedule('07 09 * * *', () => { // 9 am KST == 12 am UTC
     console.log("Checking for payment reminders...");
     const query = 'SELECT classid, studentFCM FROM classes WHERE DATE(dateofpayment) = CURDATE()';
 
+    console.log("json: ", serviceAccount);
+
     db.query(query, (err, results) => {
         if (err) {
             console.error("Error querying the database:", err);
             return;
         }
 
+        if (results.length === 0) {
+            console.log("No payment reminders found for today.");
+            return;
+        }
+
         results.forEach(row => {
             if (row.studentFCM) {
+                console.log(`Sending notification to class ID ${row.classid} with token ${row.studentFCM}`);
                 sendPushNotification(row.studentFCM, "오늘은 정산일입니다!");
             } else {
                 console.warn(`No FCM token found for class ID: ${row.classid}`);
