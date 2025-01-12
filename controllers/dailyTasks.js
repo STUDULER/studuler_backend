@@ -149,39 +149,32 @@ admin.initializeApp({
 });
 
 // send push notification
-function sendPushNotification(token, message) {
+async function sendPushNotification(token, message) {
     const payload = {
-        message: {
-            token: token,
-            notification: {
-                title: "정산 알림",
-                body: message,
-            },
+        token,
+        notification: {
+            title: "정산 알림",
+            body: message,
         },
     };
 
-    admin.messaging().send(payload)
-        .then((response) => {
-            console.log("Successfully sent message:", response);
-        })
-        .catch((error) => {
-            console.error("Error sending message:", error);
-        });
+    try {
+        const response = await admin.messaging().send(payload);
+        console.log("Successfully sent message:", response);
+    } catch (error) {
+        console.error("Error sending message:", error);
+    }
 }
 
 // cron job: runs daily at 9 AM
-cron.schedule('35 09 * * *', () => { // 9 am KST == 12 am UTC
+cron.schedule('42 10 * * *', async () => { // 9 am KST == 12 am UTC
     console.log("Checking for payment reminders...");
     const query = 'SELECT classid, studentFCM FROM classes WHERE DATE(dateofpayment) = CURDATE()';
 
     console.log("json: ", serviceAccount);
 
-    db.query(query, (err, results) => {
-        console.log("cron1");
-        if (err) {
-            console.error("Error querying the database:", err);
-            return;
-        }
+    try {
+        const [results] = await db.query(query);
         console.log("Query results:", results);
 
         if (results.length === 0) {
@@ -190,13 +183,15 @@ cron.schedule('35 09 * * *', () => { // 9 am KST == 12 am UTC
         }
         console.log("Payment reminders to process:", results.length);
 
-        results.forEach(row => {
+        for (const row of results) {
             if (row.studentFCM) {
                 console.log(`Sending notification to class ID ${row.classid} with token ${row.studentFCM}`);
-                sendPushNotification(row.studentFCM, "오늘은 정산일입니다!");
+                await sendPushNotification(row.studentFCM, "오늘은 정산일입니다!");
             } else {
                 console.warn(`No FCM token found for class ID: ${row.classid}`);
             }
-        });
-    });
+        }
+    } catch (err) {
+        console.error("Error in messaging task:", err);
+    }
 });
