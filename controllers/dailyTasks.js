@@ -82,7 +82,7 @@ const generateNextDates = async (classId) => {
 };
 
 // Schedule to run daily at 11:59 PM in Seoul, Korea
-cron.schedule('* * * * *', async () => { // 23:59 KST == 14:59 UTC
+cron.schedule('17 06 * * *', async () => { // 23:59 KST == 14:59 UTC
     console.log("Running daily check for generating lesson dates at 11:59 PM...");
     const sqlGetClasses = `
         SELECT c.classid 

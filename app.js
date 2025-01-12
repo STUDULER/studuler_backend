@@ -7,9 +7,7 @@ const homeRoutes = require('./routes/homeRoutes');
 const totalRoutes = require('./routes/totalCalendarRoutes');
 const eachRoutes = require('./routes/eachCalendarRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
-
-const dailyTasksRoutes = require('./routes/dailyTasksRoutes');
-
+const dailyRoutes = require('./routes/dailyTasksRoutes');
 const { logout } = require('./jwt/auth');
 const { authenticateJWT } = require('./jwt/auth');
 const { refreshAccessToken } = require('./jwt/auth');
@@ -28,25 +26,13 @@ app.use("/home", homeRoutes);
 app.use("/total", totalRoutes);
 app.use("/each", eachRoutes);
 app.use("/payment", paymentRoutes);
-
-app.use("/debug", dailyTasksRoutes);
-
+app.use("/daily", dailyRoutes);
 app.post('/logout', authenticateJWT, logout);
 app.post('/refreshAccessToken', refreshAccessToken);
 
 app.get('/', (req, res) => {
     res.send('Welcome to STUDULER');
 });
-
-/*
-app.listen(PORT, () => {
-    console.log("Server is running");
-});
-
-db.getConnection()
-    .then(() => console.log('Connected to database.'))
-    .catch((err) => console.error('Database connection failed:', err.stack));
-*/
 
 const startServer = async () => {
     try {
