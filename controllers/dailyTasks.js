@@ -145,18 +145,22 @@ exports.debugNextDates = async (req, res) => {
 // manage firebase
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
+    projectId: serviceAccount.project_id,
 });
 
 // send push notification
 function sendPushNotification(token, message) {
     const payload = {
-        notification: {
-            title: "정산 알림",
-            body: message,
+        message: {
+            token: token,
+            notification: {
+                title: "정산 알림",
+                body: message,
+            },
         },
     };
 
-    admin.messaging().sendToDevice(token, payload)
+    admin.messaging().send(payload)
         .then((response) => {
             console.log("Successfully sent message:", response);
         })
@@ -166,13 +170,14 @@ function sendPushNotification(token, message) {
 }
 
 // cron job: runs daily at 9 AM
-cron.schedule('16 09 * * *', () => { // 9 am KST == 12 am UTC
+cron.schedule('27 09 * * *', () => { // 9 am KST == 12 am UTC
     console.log("Checking for payment reminders...");
     const query = 'SELECT classid, studentFCM FROM classes WHERE DATE(dateofpayment) = CURDATE()';
 
     console.log("json: ", serviceAccount);
 
     db.query(query, (err, results) => {
+        console.log("cron1");
         if (err) {
             console.error("Error querying the database:", err);
             return;
@@ -182,6 +187,7 @@ cron.schedule('16 09 * * *', () => { // 9 am KST == 12 am UTC
             console.log("No payment reminders found for today.");
             return;
         }
+        console.log("Payment reminders to process:", results.length);
 
         results.forEach(row => {
             if (row.studentFCM) {
