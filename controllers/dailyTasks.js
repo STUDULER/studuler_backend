@@ -1,8 +1,9 @@
 const db = require('../config/db');
 const cron = require('node-cron');
 const admin = require('firebase-admin');
-const serviceAccount = require(path.resolve(`${process.env.FIREBASE_SERVICE_ACCOUNT}.json`));
+const path = require('path');
 require('dotenv').config();
+const serviceAccount = require(path.resolve(`${process.env.FIREBASE_SERVICE_ACCOUNT}.json`));
 
 const generateNextDates = async (classId) => {
     try {
@@ -164,7 +165,8 @@ function sendPushNotification(token, message) {
 }
 
 // cron job: runs daily at 9 AM
-cron.schedule('0 9 * * *', () => { // 9 am KST == 12 am UTC
+cron.schedule('07 09 * * *', () => { // 9 am KST == 12 am UTC
+    console.log("Checking for payment reminders...");
     const query = 'SELECT classid, studentFCM FROM classes WHERE DATE(dateofpayment) = CURDATE()';
 
     db.query(query, (err, results) => {
@@ -174,8 +176,11 @@ cron.schedule('0 9 * * *', () => { // 9 am KST == 12 am UTC
         }
 
         results.forEach(row => {
-            // Assuming you have a `token` field in your `classes` table to send notifications
-            sendPushNotification(row.studentFCM, "오늘은 정산일입니다!");
+            if (row.studentFCM) {
+                sendPushNotification(row.studentFCM, "오늘은 정산일입니다!");
+            } else {
+                console.warn(`No FCM token found for class ID: ${row.classid}`);
+            }
         });
     });
 });
