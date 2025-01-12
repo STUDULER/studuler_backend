@@ -7,6 +7,9 @@ const homeRoutes = require('./routes/homeRoutes');
 const totalRoutes = require('./routes/totalCalendarRoutes');
 const eachRoutes = require('./routes/eachCalendarRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
+
+const dailyTasksRoutes = require('./routes/dailyTasksRoutes');
+
 const { logout } = require('./jwt/auth');
 const { authenticateJWT } = require('./jwt/auth');
 const { refreshAccessToken } = require('./jwt/auth');
@@ -25,6 +28,8 @@ app.use("/home", homeRoutes);
 app.use("/total", totalRoutes);
 app.use("/each", eachRoutes);
 app.use("/payment", paymentRoutes);
+
+app.use("/debug", dailyTasksRoutes);
 
 app.post('/logout', authenticateJWT, logout);
 app.post('/refreshAccessToken', refreshAccessToken);

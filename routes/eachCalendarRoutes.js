@@ -5,11 +5,6 @@ const upload = multer({ storage: multer.memoryStorage() });
 const eachCalendarController = require('../controllers/eachCalendarController');
 const { authenticateJWT } = require('../jwt/auth');
 
-const debugNextDates = require('../controllers/dailyTasks');
-router.post('/debug', (req, res) => {
-    debugNextDates(req, res)
-});
-
 router.get('/calendarT', authenticateJWT, (req, res) => {
     eachCalendarController.getEachCalendarTeacher(req, res);
 });
