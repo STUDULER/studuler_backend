@@ -53,6 +53,7 @@ exports.loginStudent = async (req, res) => {
     const { mail, password, studentFCM } = req.body;
     const sql = 'SELECT * FROM students WHERE mail = ? AND password = ?';
 
+    console.log("studentFCM: ", studentFCM);
     try {
         const [results] = await db.query(sql, [mail, password]);
         if (results.length === 0) {
@@ -118,6 +119,8 @@ const signupWithGoogle = async (username, mail, loginMethod) => {
 exports.loginStudentWithKakao = async (req, res) => {
     const { kakaoId, username, studentFCM } = req.body;
 
+    console.log("studentFCM: ", studentFCM);
+
     /*if (!kakaoAccessToken) {
         return res.status(400).json({ message: 'Kakao access token is required' });
     }*/
@@ -177,6 +180,8 @@ exports.loginStudentWithKakao = async (req, res) => {
 
 exports.loginStudentWithGoogle = async (req, res) => {
     const { username, mail, studentFCM } = req.body;
+
+    console.log("studentFCM: ", studentFCM);
 
     try {
         const sqlCheck = 'SELECT * FROM students WHERE mail = ?';

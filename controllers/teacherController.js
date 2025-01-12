@@ -62,6 +62,7 @@ exports.loginTeacher = async (req, res) => {
     const { mail, password, teacherFCM } = req.body;
     const sql = 'SELECT * FROM teachers WHERE mail = ? AND password = ?';
 
+    console.log("teacherFCM: ", teacherFCM);
     try {
         const [results] = await db.query(sql, [mail, password]);
         if (results.length === 0) {
@@ -97,6 +98,8 @@ exports.loginTeacher = async (req, res) => {
 
 exports.loginTeacherWithKakao = async (req, res) => {
     const { kakaoId, username, teacherFCM } = req.body;
+
+    console.log("teacherFCM: ", teacherFCM);
 
     /*if (!kakaoAccessToken) {
         return res.status(400).json({ message: 'Kakao access token is required' });
