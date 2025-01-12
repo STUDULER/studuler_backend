@@ -4,7 +4,6 @@ const admin = require('firebase-admin');
 const path = require('path');
 require('dotenv').config();
 const serviceAccount = require(path.resolve(`${process.env.FIREBASE_SERVICE_ACCOUNT}.json`));
-//const serviceAccount = require(`./${process.env.FIREBASE_SERVICE_ACCOUNT}.json`);
 
 const generateNextDates = async (classId) => {
     try {
@@ -54,18 +53,6 @@ const generateNextDates = async (classId) => {
         const dateValues = nextDates.map(d => [d.classid, d.date, d.time, d.feedback_written, d.createdAt, d.updatedAt]);
         const [dateInsertResult] = await db.query(insertDatesSql, [dateValues]);
 
-        /*const fetchDateIdsSql = `
-            SELECT dateid, date 
-            FROM dates 
-            WHERE classid = ? AND date > ? 
-            ORDER BY date ASC`;
-        const [insertedDates] = await db.query(fetchDateIdsSql, [classId, lastDate]);
-
-
-        const feedbackEntries = insertedDates.map(d => [d.dateid, new Date(), new Date()]);
-        const insertFeedbackSql = `INSERT INTO feedback (dateid, createdAt, updatedAt) VALUES ?`;
-        await db.query(insertFeedbackSql, [feedbackEntries]);
-*/
         const paymentDate = prepay
             ? nextDates[0].date // First date for prepay
             : nextDates[nextDates.length - 1].date; // Last date otherwise
@@ -167,15 +154,12 @@ async function sendPushNotification(token, message) {
 }
 
 // cron job: runs daily at 9 AM
-cron.schedule('42 10 * * *', async () => { // 9 am KST == 12 am UTC
+cron.schedule('0 12 * * *', async () => { // 9:00 KST == 12:00 UTC
     console.log("Checking for payment reminders...");
     const query = 'SELECT classid, studentFCM FROM classes WHERE DATE(dateofpayment) = CURDATE()';
 
-    console.log("json: ", serviceAccount);
-
     try {
         const [results] = await db.query(query);
-        console.log("Query results:", results);
 
         if (results.length === 0) {
             console.log("No payment reminders found for today.");
@@ -185,7 +169,6 @@ cron.schedule('42 10 * * *', async () => { // 9 am KST == 12 am UTC
 
         for (const row of results) {
             if (row.studentFCM) {
-                console.log(`Sending notification to class ID ${row.classid} with token ${row.studentFCM}`);
                 await sendPushNotification(row.studentFCM, "오늘은 정산일입니다!");
             } else {
                 console.warn(`No FCM token found for class ID: ${row.classid}`);

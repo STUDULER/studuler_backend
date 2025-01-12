@@ -22,7 +22,6 @@ exports.getTeachers = async (req, res) => {
 // when teacher signs up
 exports.signupTeacher = async (req, res) => {
     const { username, password, account, bank, name, mail, loginMethod, imageNum, kakaoId } = req.body;
-    console.log('Received data:', req.body);
 
     let checkSql, checkParams;
     if (kakaoId) {
@@ -62,7 +61,6 @@ exports.loginTeacher = async (req, res) => {
     const { mail, password, teacherFCM } = req.body;
     const sql = 'SELECT * FROM teachers WHERE mail = ? AND password = ?';
 
-    console.log("teacherFCM: ", teacherFCM);
     try {
         const [results] = await db.query(sql, [mail, password]);
         if (results.length === 0) {
@@ -101,22 +99,7 @@ exports.loginTeacherWithKakao = async (req, res) => {
 
     console.log("teacherFCM: ", teacherFCM);
 
-    /*if (!kakaoAccessToken) {
-        return res.status(400).json({ message: 'Kakao access token is required' });
-    }*/
-
     try {
-        /*const kakaoResponse = await axios.get('https://kapi.kakao.com/v2/user/me', {
-            headers: {
-                Authorization: `Bearer ${kakaoAccessToken}`,
-            },
-        });
-
-        const kakaoProfile = kakaoResponse.data;
-        const kakaoId = kakaoProfile.id;
-        const username = kakaoProfile.properties?.nickname || 'Unknown';
-        const mail = kakaoProfile.kakao_account?.email || null;*/
-
         const sqlCheck = 'SELECT * FROM teachers WHERE kakaoId = ?';
         const [existingTeacher] = await db.query(sqlCheck, [kakaoId]);
 
@@ -151,8 +134,6 @@ exports.loginTeacherWithKakao = async (req, res) => {
 
 exports.loginTeacherWithGoogle = async (req, res) => {
     const { mail, teacherFCM } = req.body;
-
-    console.log("teacherFCM: ", teacherFCM);
 
     try {
         const sqlCheck = 'SELECT * FROM teachers WHERE mail = ?';

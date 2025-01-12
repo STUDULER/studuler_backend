@@ -20,8 +20,6 @@ exports.getStudents = async (req, res) => {
 exports.signupStudent = async (req, res) => {
     const { username, password, mail, loginMethod, imageNum } = req.body;
 
-    console.log('Received data:', req.body);
-
     const checkSql = 'SELECT COUNT(*) AS count FROM students WHERE mail = ?';
     const sql = 'INSERT INTO students (username, password, mail, loginMethod, imageNum, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, NOW(), NOW())';
     try {
@@ -53,7 +51,6 @@ exports.loginStudent = async (req, res) => {
     const { mail, password, studentFCM } = req.body;
     const sql = 'SELECT * FROM students WHERE mail = ? AND password = ?';
 
-    console.log("studentFCM: ", studentFCM);
     try {
         const [results] = await db.query(sql, [mail, password]);
         if (results.length === 0) {
@@ -119,24 +116,7 @@ const signupWithGoogle = async (username, mail, loginMethod) => {
 exports.loginStudentWithKakao = async (req, res) => {
     const { kakaoId, username, studentFCM } = req.body;
 
-    console.log("studentFCM: ", studentFCM);
-
-    /*if (!kakaoAccessToken) {
-        return res.status(400).json({ message: 'Kakao access token is required' });
-    }*/
-
     try {
-        /*const kakaoResponse = await axios.get('https://kapi.kakao.com/v2/user/me', {
-            headers: {
-                Authorization: `Bearer ${kakaoAccessToken}`,
-            },
-        });
-
-        const kakaoProfile = kakaoResponse.data;
-        const kakaoId = kakaoProfile.id;
-        const username = kakaoProfile.properties?.nickname || 'Unknown';
-        const mail = kakaoProfile.kakao_account?.email || null;*/
-
         const sqlCheck = 'SELECT * FROM students WHERE kakaoId = ?';
         const [existingStudent] = await db.query(sqlCheck, [kakaoId]);
 
@@ -180,8 +160,6 @@ exports.loginStudentWithKakao = async (req, res) => {
 
 exports.loginStudentWithGoogle = async (req, res) => {
     const { username, mail, studentFCM } = req.body;
-
-    console.log("studentFCM: ", studentFCM);
 
     try {
         const sqlCheck = 'SELECT * FROM students WHERE mail = ?';

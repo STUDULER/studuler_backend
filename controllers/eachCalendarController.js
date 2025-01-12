@@ -317,10 +317,6 @@ exports.deleteLesson = async (req, res) => { // delete the date and then create 
                     const insertNewDateSql = `INSERT INTO dates (classid, date, time, feedback_written, createdAt, updatedAt) VALUES (?, ?, ?, 0, NOW(), NOW())`;
                     const [insertResult] = await connection.query(insertNewDateSql, [classId, formattedDate, time]);
 
-                    /*const newDateId = insertResult.insertId;
-                    const insertFeedbackSql = `INSERT INTO feedback (dateid, workdone, attitude, homework, memo, rate, createdAt, updatedAt) VALUES (?, '', '', 0, '', 0, NOW(), NOW())`;
-                    await connection.query(insertFeedbackSql, [newDateId]);
-*/
                     newLessonAdded = true;
 
                     if (!prepay) {
@@ -420,11 +416,6 @@ exports.addNewLesson = async (req, res) => { // delete the last date and then cr
 
         const newDateId = insertResult.insertId;
 
-        // insert a new feedback for the new date
-        /*const insertFeedbackSql = `INSERT INTO feedback (dateid, workdone, attitude, homework, memo, rate, createdAt, updatedAt)
-                                               VALUES (?, '', '', 0, '', 0, NOW(), NOW())`;
-        await connection.query(insertFeedbackSql, [newDateId]);
-*/
         const getUpdatedLastDateSql = `SELECT date FROM dates WHERE classid = ? ORDER BY date DESC LIMIT 1`;
         const [updatedLastDateResult] = await connection.query(getUpdatedLastDateSql, [classId]);
         if (updatedLastDateResult.length === 0) {
