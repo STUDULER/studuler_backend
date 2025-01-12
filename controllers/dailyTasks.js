@@ -82,7 +82,7 @@ const generateNextDates = async (classId) => {
 };
 
 // Schedule to run daily at 11:59 PM in Seoul, Korea
-cron.schedule('40 05 * * *', async () => { // 23:59 KST == 14:59 UTC
+cron.schedule('* * * * *', async () => { // 23:59 KST == 14:59 UTC
     console.log("Running daily check for generating lesson dates at 11:59 PM...");
     const sqlGetClasses = `
         SELECT c.classid 
@@ -108,3 +108,33 @@ cron.schedule('40 05 * * *', async () => { // 23:59 KST == 14:59 UTC
         console.error("Error in scheduled task:", err);
     }
 });
+
+const debugNextDates = async (req, res) => {
+    console.log("start debug");
+
+    const sqlGetClasses = `
+        SELECT c.classid 
+        FROM classes c 
+        JOIN (
+            SELECT classid, MAX(date) AS lastDate 
+            FROM dates 
+            GROUP BY classid
+        ) d ON c.classid = d.classid 
+        WHERE d.lastDate = CURDATE()`;
+
+    try {
+        const [classes] = await db.query(sqlGetClasses);
+        if (classes.length === 0) {
+            console.log("No classes found for date generation.");
+            return;
+        }
+
+        for (const { classid } of classes) {
+            await generateNextDates(classid);
+        }
+    } catch (err) {
+        console.error("Error in scheduled task:", err);
+    }
+};
+
+moduler.exports = debugNextDates;
