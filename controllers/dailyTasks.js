@@ -3,8 +3,8 @@ const cron = require('node-cron');
 const admin = require('firebase-admin');
 const path = require('path');
 require('dotenv').config();
-//const serviceAccount = require(path.resolve(`${process.env.FIREBASE_SERVICE_ACCOUNT}.json`));
-const serviceAccount = require(`./${process.env.FIREBASE_SERVICE_ACCOUNT}.json`);
+const serviceAccount = require(path.resolve(`${process.env.FIREBASE_SERVICE_ACCOUNT}.json`));
+//const serviceAccount = require(`./${process.env.FIREBASE_SERVICE_ACCOUNT}.json`);
 
 const generateNextDates = async (classId) => {
     try {
@@ -166,7 +166,7 @@ function sendPushNotification(token, message) {
 }
 
 // cron job: runs daily at 9 AM
-cron.schedule('07 09 * * *', () => { // 9 am KST == 12 am UTC
+cron.schedule('16 09 * * *', () => { // 9 am KST == 12 am UTC
     console.log("Checking for payment reminders...");
     const query = 'SELECT classid, studentFCM FROM classes WHERE DATE(dateofpayment) = CURDATE()';
 
