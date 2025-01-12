@@ -1,5 +1,5 @@
 const db = require('../config/db');
-const { CronJob } = require('cron');
+const cron = require('node-cron');
 
 const generateNextDates = async (classId) => {
     try {
@@ -81,37 +81,30 @@ const generateNextDates = async (classId) => {
     }
 };
 
-// Schedule to run daily at 11:59 PM
-const job = new CronJob(
-    '20 55 * * *',
-    async () => {
-        console.log("Running daily check for generating lesson dates at 11:59 PM Seoul time...");
-
-        const sqlGetClasses = `SELECT classid FROM classes`;
-
-        try {
-            const [classes] = await db.query(sqlGetClasses);
-            for (const { classid } of classes) {
-                await generateNextDates(classid);
-            }
-        } catch (err) {
-            console.error("Error in scheduled task:", err);
-        }
-    },
-    null, // No onComplete function
-    true, // Start immediately
-    'Asia/Seoul' // Set timezone
-);
-/*cron.schedule('59 23 * * *', async () => {
+// Schedule to run daily at 11:59 PM in Seoul, Korea
+cron.schedule('05 21 * * *', async () => { // 23:59 KST == 14:59 UTC
     console.log("Running daily check for generating lesson dates at 11:59 PM...");
-    const sqlGetClasses = `SELECT classid FROM classes`;
+    const sqlGetClasses = `
+        SELECT c.classid 
+        FROM classes c 
+        JOIN (
+            SELECT classid, MAX(date) AS lastDate 
+            FROM dates 
+            GROUP BY classid
+        ) d ON c.classid = d.classid 
+        WHERE d.lastDate = CURDATE()`;
 
     try {
         const [classes] = await db.query(sqlGetClasses);
+        if (classes.length === 0) {
+            console.log("No classes found for date generation.");
+            return;
+        }
+
         for (const { classid } of classes) {
             await generateNextDates(classid);
         }
     } catch (err) {
         console.error("Error in scheduled task:", err);
     }
-});*/
+});
