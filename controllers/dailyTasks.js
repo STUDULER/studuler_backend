@@ -109,7 +109,7 @@ cron.schedule('* * * * *', async () => { // 23:59 KST == 14:59 UTC
     }
 });
 
-const debugNextDates = async (req, res) => {
+exports.debugNextDates = async (req, res) => {
     console.log("start debug");
 
     const sqlGetClasses = `
@@ -136,5 +136,3 @@ const debugNextDates = async (req, res) => {
         console.error("Error in scheduled task:", err);
     }
 };
-
-moduler.exports = debugNextDates;
