@@ -558,12 +558,11 @@ exports.updateTeacherNameStudent = async (req, res) => {
     console.log('student ID:', studentId);
 
     const sql = `
-        UPDATE student_classinfo AS SCI
-        JOIN students AS S ON S.studentid = SCI.studentid
-        JOIN classes AS C ON C.classid = SCI.classid
+        UPDATE student_classinfo AS SCI 
+        JOIN classes AS C ON C.classid = SCI.classid 
         SET 
-            SCI.teachername = ?,
-            SCI.updatedAt = NOW()
+            SCI.teachername = ?, 
+            SCI.updatedAt = NOW() 
         WHERE 
             SCI.studentid = ? 
             AND C.classid = ?`;
@@ -591,12 +590,11 @@ exports.updateClassNameStudent = async (req, res) => {
     console.log('student ID:', studentId);
 
     const sql = `
-        UPDATE student_classinfo AS SCI
-        JOIN students AS S ON S.studentid = SCI.studentid
-        JOIN classes AS C ON C.classid = SCI.classid
+        UPDATE student_classinfo AS SCI 
+        JOIN classes AS C ON C.classid = SCI.classid 
         SET 
             SCI.classname = ?, 
-            SCI.updatedAt = NOW()
+            SCI.updatedAt = NOW() 
         WHERE 
             SCI.studentid = ? 
             AND C.classid = ?`;
@@ -624,12 +622,11 @@ exports.updateThemeColorStudent = async (req, res) => {
     console.log('student ID:', studentId);
 
     const sql = `
-        UPDATE student_classinfo AS SCI
-        JOIN students AS S ON S.studentid = SCI.studentid
-        JOIN classes AS C ON C.classid = SCI.classid
+        UPDATE student_classinfo AS SCI 
+        JOIN classes AS C ON C.classid = SCI.classid 
         SET 
-            SCI.themecolor = ?,
-            SCI.updatedAt = NOW()
+            SCI.themecolor = ?, 
+            SCI.updatedAt = NOW() 
         WHERE 
             SCI.studentid = ? 
             AND C.classid = ?`;
