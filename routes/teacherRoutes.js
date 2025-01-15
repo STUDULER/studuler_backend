@@ -6,12 +6,18 @@ const multer = require('multer');
 const upload = multer();
 
 router.get('/', teacherController.getTeachers);
-//router.get('/', authenticateJWT, teacherController.getTeachers);
-router.post('/signup', upload.none(), teacherController.signupTeacher); // for postman's form-data format
-//router.post('/signup', teacherController.signupTeacher); // for application-json format
-router.post('/loginWithMail', upload.none(), teacherController.loginTeacher);
-router.post('/loginWithKakao', upload.none(), teacherController.loginTeacherWithKakao);
-router.post('/loginWithGoogle', upload.none(), teacherController.loginTeacherWithGoogle);
+router.post('/signup', upload.none(), (req, res) => {
+    teacherController.signupTeacher(req, res);
+});
+router.post('/loginWithMail', upload.none(), (req, res) => {
+    teacherController.loginTeacher(req, res);
+});
+router.post('/loginWithKakao', upload.none(), (req, res) => {
+    teacherController.loginTeacherWithKakao(req, res);
+});
+router.post('/loginWithGoogle', upload.none(), (req, res) => {
+    teacherController.loginTeacherWithGoogle(req, res);
+});
 router.post('/signout', authenticateJWT, upload.none(), (req, res) => {
     teacherController.signoutTeacher(req, res);
 });
