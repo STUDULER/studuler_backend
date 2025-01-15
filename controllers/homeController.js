@@ -742,6 +742,8 @@ exports.updateAccountInfo = async (req, res) => {
     const { name, bank, account, kakaopayLink } = req.body;
     const teacherId = req.userId;
 
+    console.log("account: ", account);
+
     const sql = `UPDATE teachers SET account = ?, bank = ?, name = ?, kakaopayLink = ? WHERE teacherid = ?`;
     try {
         await db.query(sql, [account, bank, name, kakaopayLink, teacherId]);
