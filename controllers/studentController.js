@@ -193,7 +193,7 @@ exports.loginStudentWithGoogle = async (req, res) => {
                 maxAge: 6 * 30 * 24 * 60 * 60 * 1000, // 6 months
             });
 
-            return res.json({ userId: studentData.userId, accessToken });
+            return res.json({ userId: studentData.userId, accessToken: studentData.accessToken });
         }
     } catch (err) {
         console.error('Google login error:', err);
