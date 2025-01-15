@@ -212,7 +212,7 @@ exports.getEachClassTeacher = async (req, res) => {
             C.hourlyrate, 
             C.prepay, 
             C.themecolor,
-            IFNULL(FinishedLessons.finished_count, 0) AS finished_lessons
+            IFNULL(MOD(FinishedLessons.finished_count, C.period), 0) AS finished_lessons
         FROM 
             classes AS C
         JOIN 
@@ -261,7 +261,7 @@ exports.getEachClassStudent = async (req, res) => {
             C.hourlyrate, 
             C.prepay, 
             SCI.themecolor, 
-            IFNULL(FinishedLessons.finished_count, 0) AS finished_lessons
+            IFNULL(MOD(FinishedLessons.finished_count, C.period), 0) AS finished_lessons
         FROM 
             student_classinfo AS SCI
         JOIN 
