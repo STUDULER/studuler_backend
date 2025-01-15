@@ -160,7 +160,6 @@ exports.loginStudentWithKakao = async (req, res) => {
 
 exports.loginStudentWithGoogle = async (req, res) => {
     const { username, mail, studentFCM } = req.body;
-    console.log("username: ", username);
 
     try {
         const sqlCheck = 'SELECT * FROM students WHERE mail = ?';

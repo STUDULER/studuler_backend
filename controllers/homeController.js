@@ -728,3 +728,33 @@ exports.removeClass = async (req, res) => {
         connection.release();
     }
 };
+
+exports.getAccountInfo = async (req, res) => {
+    const teacherId = req.userId;
+
+    const sql = `SELECT name, bank, account, kakaopayLink FROM teachers WHERE teacherid = ?`;
+    try {
+        const [results] = await db.query(sql, [teacherId]);
+        res.json(results);
+    }
+    catch (err) {
+        console.error('Database query error:', err);
+        res.status(500).send(err);
+    }
+};
+
+exports.updateAccountInfo = async (req, res) => {
+    const { name, bank, account, kakaopayLink } = req.body;
+    const teacherId = req.userId;
+
+    const sql = `UPDATE teachers SET account = ?, bank = ?, name = ?, kakaopayLink = ? WHERE teacherid = ?`;
+    try {
+        await db.query(sql, [account, bank, name, kakaopayLink, teacherId]);
+
+        res.status(201).json({ message: "updated successfully" });
+    }
+    catch (err) {
+        console.error('Database query error:', err);
+        res.status(500).send(err);
+    }
+};

@@ -32,4 +32,8 @@ router.get('/teacherFCMByStudent', authenticateJWT, (req, res) => {
     paymentController.getTeacherFCMByStudent(req, res)
 });
 
+router.get('/kakaopayLink', authenticateJWT, (req, res) => {
+    paymentController.getKakaopayLink(req, res)
+});
+
 module.exports = router;

@@ -254,3 +254,23 @@ exports.getTeacherFCMByStudent = async (req, res) => {
         res.status(500).send(err);
     }
 };
+
+exports.getKakaopayLink = async (req, res) => {
+    const { classId } = req.body;
+
+    const sql = `SELECT T.kakaopayLink FROM classes AS C LEFT JOIN teachers AS T ON C.teacherid = T.teacherid WHERE C.classid = ?`;
+
+    try {
+        const [results] = await db.query(sql, [classId]);
+
+        if (results.length === 0) {
+            return res.status(404).json({ message: `No class ID ${classId}` });
+        }
+
+        res.status(200).json(results[0]);
+    }
+    catch (err) {
+        console.error('Database query error:', err);
+        res.status(500).send(err);
+    }
+};

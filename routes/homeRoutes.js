@@ -91,4 +91,11 @@ router.delete('/removeClass', authenticateJWT, (req, res) => {
     homeController.removeClass(req, res);
 });
 
+router.get('/accountInfo', authenticateJWT, upload.none(), (req, res) => {
+    homeController.getAccountInfo(req, res);
+});
+router.put('/updateAccountInfo', authenticateJWT, upload.none(), (req, res) => {
+    homeController.updateAccountInfo(req, res);
+});
+
 module.exports = router;

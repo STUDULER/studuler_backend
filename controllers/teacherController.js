@@ -21,7 +21,7 @@ exports.getTeachers = async (req, res) => {
 
 // when teacher signs up
 exports.signupTeacher = async (req, res) => {
-    const { username, password, account, bank, name, mail, loginMethod, imageNum, kakaoId } = req.body;
+    const { username, password, account, bank, name, mail, loginMethod, imageNum, kakaoId, kakaopayLink } = req.body;
 
     let checkSql, checkParams;
     if (kakaoId) {
@@ -31,7 +31,7 @@ exports.signupTeacher = async (req, res) => {
         checkSql = 'SELECT COUNT(*) AS count FROM teachers WHERE mail = ?';
         checkParams = [mail];
     }
-    const sql = 'INSERT INTO teachers (username, password, account, bank, name, mail, loginMethod, imageNum, kakaoId, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+    const sql = 'INSERT INTO teachers (username, password, account, bank, name, mail, loginMethod, imageNum, kakaoId, kakaopayLink, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
     try {
         const [checkResult] = await db.query(checkSql, checkParams);
         const exists = checkResult[0].count > 0;
@@ -39,7 +39,7 @@ exports.signupTeacher = async (req, res) => {
             return res.status(401).json({ message: '이미 존재하는 계정입니다.' });
         }
 
-        const [result] = await db.query(sql, [username, password, account, bank, name, mail, loginMethod, imageNum, kakaoId, new Date(), new Date()]);
+        const [result] = await db.query(sql, [username, password, account, bank, name, mail, loginMethod, imageNum, kakaoId, kakaopayLink, new Date(), new Date()]);
 
         const { accessToken, refreshToken } = generateTokens(result.insertId, 'teacher');
         res.cookie('refreshToken', refreshToken, {
