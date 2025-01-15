@@ -201,3 +201,15 @@ exports.signoutTeacher = async (req, res) => {
         res.status(500).json({ message: "Internal Server Error", error: error.message });
     }
 };
+
+exports.getName = async (req, res) => {
+    const teacherId = req.userId;
+
+    try{
+        const [results] = await db.query('SELECT username FROM teachers WHERE teacherid = ?', [teacherId]);
+        res.json(results);
+    } catch (err) {
+        console.error('Database query error:', err);
+        res.status(500).send(err);
+    }
+};
