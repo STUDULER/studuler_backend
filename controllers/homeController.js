@@ -193,7 +193,7 @@ exports.joinClass = async (req, res) => {
         await connection.query(insertClassInfoSql, [userId, classcode]);
 
         await connection.commit();
-        res.status(200).json({ message: 'Successfully joined the class and updated class info.', classname });
+        res.status(200).json({ message: 'Successfully joined the class and updated class info.', classname: classname});
     } catch (err) {
         // If anything goes wrong, rollback the transaction
         await connection.rollback();
