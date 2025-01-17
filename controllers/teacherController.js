@@ -216,13 +216,11 @@ exports.getName = async (req, res) => {
 
 exports.checkMailTeacher = async (req, res) => {
     const { mail } = req.body;
-    console.log("mail: ", mail);
 
     try{
         const [results] = await db.query('SELECT COUNT(*) AS count FROM teachers WHERE mail = ?', [mail]);
-        console.log("exist: ", results[0].count);
         const exists = results[0].count > 0;
-        res.json(exists);
+        res.json(!exists);
     } catch (err) {
         console.error('Database query error:', err);
         res.status(500).send(err);
