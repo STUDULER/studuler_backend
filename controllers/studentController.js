@@ -1,5 +1,6 @@
 const db = require('../config/db');
 const axios = require('axios');
+const crypto = require('crypto');
 const { generateTokens } = require('../jwt/auth');
 require('dotenv').config();
 
@@ -16,12 +17,18 @@ exports.getStudents = async (req, res) => {
     }
 };
 
+const hashPassword = (password) => {
+    const salt = crypto.randomBytes(16).toString('hex'); // Generate a random salt
+    const hash = crypto.createHmac('sha256', salt).update(password).digest('hex'); // Hash the password
+    return { salt, hash };
+};
+
 // when student signs up
 exports.signupStudent = async (req, res) => {
     const { username, password, mail, loginMethod, imageNum } = req.body;
 
     const checkSql = 'SELECT COUNT(*) AS count FROM students WHERE mail = ?';
-    const sql = 'INSERT INTO students (username, password, mail, loginMethod, imageNum, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, NOW(), NOW())';
+    const sql = 'INSERT INTO students (username, password, mail, loginMethod, imageNum, salt, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())';
     try {
         const [checkResult] = await db.query(checkSql, [mail]);
         const mailExists = checkResult[0].count > 0;
@@ -29,7 +36,9 @@ exports.signupStudent = async (req, res) => {
             return res.status(401).json({ message: '이미 존재하는 계정입니다.' });
         }
 
-        const [result] = await db.query(sql, [username, password, mail, loginMethod, imageNum]);
+        const { salt, hash } = hashPassword(password);
+
+        const [result] = await db.query(sql, [username, hash, mail, loginMethod, imageNum, salt]);
 
         const { accessToken, refreshToken } = generateTokens(result.insertId, 'student');
         res.cookie('refreshToken', refreshToken, {
@@ -46,10 +55,15 @@ exports.signupStudent = async (req, res) => {
     }
 };
 
+const verifyPassword = (password, salt, hash) => {
+    const hashToVerify = crypto.createHmac('sha256', salt).update(password).digest('hex');
+    return hashToVerify === hash;
+};
+
 // jwt token for authentication when logs in
 exports.loginStudent = async (req, res) => {
     const { mail, password, studentFCM } = req.body;
-    const sql = 'SELECT * FROM students WHERE mail = ? AND password = ?';
+    const sql = 'SELECT * FROM students WHERE mail = ?';
 
     try {
         const [results] = await db.query(sql, [mail, password]);
@@ -61,6 +75,15 @@ exports.loginStudent = async (req, res) => {
         }
 
         const student = results[0];
+
+        const isPasswordValid = verifyPassword(password, student.salt, student.password);
+        if (!isPasswordValid) {
+            return res.status(401).json({
+                success: false,
+                message: '잘못된 메일 또는 비밀번호 입니다. 다시 입력해주세요.',
+            });
+        }
+        
         const { accessToken, refreshToken } = generateTokens(student.studentid, 'student');
         if (studentFCM) {
             const updateResult = await updateStudentFCM(student.studentid, studentFCM);

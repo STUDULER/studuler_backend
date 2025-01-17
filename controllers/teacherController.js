@@ -1,5 +1,6 @@
 const db = require('../config/db');
 const axios = require('axios');
+const crypto = require('crypto');
 //const { OAuth2Client } = require('google-auth-library');
 //const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const { generateTokens } = require('../jwt/auth');
@@ -19,6 +20,12 @@ exports.getTeachers = async (req, res) => {
     }
 };
 
+const hashPassword = (password) => {
+    const salt = crypto.randomBytes(16).toString('hex'); // Generate a random salt
+    const hash = crypto.createHmac('sha256', salt).update(password).digest('hex'); // Hash the password
+    return { salt, hash };
+};
+
 // when teacher signs up
 exports.signupTeacher = async (req, res) => {
     const { username, password, account, bank, name, mail, loginMethod, imageNum, kakaoId, kakaopayLink } = req.body;
@@ -31,7 +38,7 @@ exports.signupTeacher = async (req, res) => {
         checkSql = 'SELECT COUNT(*) AS count FROM teachers WHERE mail = ?';
         checkParams = [mail];
     }
-    const sql = 'INSERT INTO teachers (username, password, account, bank, name, mail, loginMethod, imageNum, kakaoId, kakaopayLink, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+    const sql = 'INSERT INTO teachers (username, password, account, bank, name, mail, loginMethod, imageNum, kakaoId, kakaopayLink, salt, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
     try {
         const [checkResult] = await db.query(checkSql, checkParams);
         const exists = checkResult[0].count > 0;
@@ -39,7 +46,9 @@ exports.signupTeacher = async (req, res) => {
             return res.status(401).json({ message: '이미 존재하는 계정입니다.' });
         }
 
-        const [result] = await db.query(sql, [username, password, account, bank, name, mail, loginMethod, imageNum, kakaoId, kakaopayLink, new Date(), new Date()]);
+        const { salt, hash } = hashPassword(password);
+
+        const [result] = await db.query(sql, [username, hash, account, bank, name, mail, loginMethod, imageNum, kakaoId, kakaopayLink, salt, new Date(), new Date()]);
 
         const { accessToken, refreshToken } = generateTokens(result.insertId, 'teacher');
         res.cookie('refreshToken', refreshToken, {
@@ -56,10 +65,15 @@ exports.signupTeacher = async (req, res) => {
     }
 };
 
+const verifyPassword = (password, salt, hash) => {
+    const hashToVerify = crypto.createHmac('sha256', salt).update(password).digest('hex');
+    return hashToVerify === hash;
+};
+
 // jwt token for authentication when logs in
 exports.loginTeacher = async (req, res) => {
     const { mail, password, teacherFCM } = req.body;
-    const sql = 'SELECT * FROM teachers WHERE mail = ? AND password = ?';
+    const sql = 'SELECT * FROM teachers WHERE mail = ?';
 
     try {
         const [results] = await db.query(sql, [mail, password]);
@@ -71,6 +85,15 @@ exports.loginTeacher = async (req, res) => {
         }
 
         const teacher = results[0];
+
+        const isPasswordValid = verifyPassword(password, teacher.salt, teacher.password);
+        if (!isPasswordValid) {
+            return res.status(401).json({
+                success: false,
+                message: '잘못된 메일 또는 비밀번호 입니다. 다시 입력해주세요.',
+            });
+        }
+        
         const { accessToken, refreshToken } = generateTokens(teacher.teacherid, 'teacher');
         if (teacherFCM) {
             const updateResult = await updateTeacherFCM(teacher.teacherid, teacherFCM);
