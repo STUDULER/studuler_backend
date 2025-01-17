@@ -24,4 +24,8 @@ router.post('/signout', authenticateJWT, upload.none(), (req, res) => {
 router.get('/name', authenticateJWT, (req, res) => {
     teacherController.getName(req, res);
 });
+router.get('/checkMail', authenticateJWT, (req, res) => {
+    teacherController.checkMailTeacher(req, res);
+});
+
 module.exports = router;
