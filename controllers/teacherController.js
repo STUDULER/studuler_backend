@@ -80,7 +80,7 @@ exports.loginTeacher = async (req, res) => {
         if (results.length === 0) {
             return res.status(401).json({
                 success: false,
-                message: '잘못된 메일 또는 비밀번호 입니다. 다시 입력해주세요.',
+                message: '잘못된 메일 입니다. 다시 입력해주세요.',
             });
         }
 
@@ -88,12 +88,12 @@ exports.loginTeacher = async (req, res) => {
 
         const isPasswordValid = verifyPassword(password, teacher.salt, teacher.password);
         if (!isPasswordValid) {
-            return res.status(401).json({
+            return res.status(402).json({
                 success: false,
-                message: '잘못된 메일 또는 비밀번호 입니다. 다시 입력해주세요.',
+                message: '잘못된 비밀번호 입니다. 다시 입력해주세요.',
             });
         }
-        
+
         const { accessToken, refreshToken } = generateTokens(teacher.teacherid, 'teacher');
         if (teacherFCM) {
             const updateResult = await updateTeacherFCM(teacher.teacherid, teacherFCM);
