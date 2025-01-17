@@ -166,6 +166,22 @@ exports.joinClass = async (req, res) => {
             });
         }
 
+        const fetchClassInfoSql = `
+            SELECT c.classname 
+            FROM classes c
+            JOIN teachers t ON c.teacherid = t.teacherid
+            WHERE c.classcode = ?
+        `;
+
+        const [classInfoRows] = await connection.query(fetchClassInfoSql, [classcode]);
+
+        if (classInfoRows.length === 0) {
+            throw new Error('Class information not found for the provided class code.');
+        }
+
+        const { classname } = classInfoRows[0];
+
+
         // insert new tuple in student_classinfo
         const insertClassInfoSql = `
                 INSERT INTO student_classinfo (studentid, classid, classname, teachername, themecolor, createdAt, updatedAt)
@@ -177,7 +193,7 @@ exports.joinClass = async (req, res) => {
         await connection.query(insertClassInfoSql, [userId, classcode]);
 
         await connection.commit();
-        res.status(200).json({ message: 'Successfully joined the class and updated class info.' });
+        res.status(200).json({ message: 'Successfully joined the class and updated class info.', classname });
     } catch (err) {
         // If anything goes wrong, rollback the transaction
         await connection.rollback();
