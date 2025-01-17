@@ -220,7 +220,7 @@ exports.checkMailTeacher = async (req, res) => {
     try{
         const [results] = await db.query('SELECT COUNT(*) AS count FROM teachers WHERE mail = ?', [mail]);
         const exists = results[0].count > 0;
-        res.json(!exists);
+        res.json(exists);
     } catch (err) {
         console.error('Database query error:', err);
         res.status(500).send(err);
