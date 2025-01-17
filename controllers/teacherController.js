@@ -216,6 +216,7 @@ exports.getName = async (req, res) => {
 
 exports.checkMailTeacher = async (req, res) => {
     const { mail } = req.body;
+    console.log("mail: ", mail);
 
     try{
         const [results] = await db.query('SELECT COUNT(*) AS count FROM teachers WHERE mail = ?', [mail]);
