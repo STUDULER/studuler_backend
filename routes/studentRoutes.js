@@ -24,7 +24,7 @@ router.post('/signout', authenticateJWT, upload.none(), (req, res) => {
 router.get('/name', authenticateJWT, (req, res) => {
     studentController.getName(req, res);
 });
-router.get('/checkMail', authenticateJWT, (req, res) => {
+router.get('/checkMail', (req, res) => {
     studentController.checkMailStudent(req, res);
 });
 
